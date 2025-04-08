@@ -5,6 +5,9 @@ adheres to the format set out by [Keep a Changelog](https://keepachangelog.com/e
 
 # Unreleased
 
+- Remove support for earlier than Node.js 20.x.x
+- Upgraded pnpm support to 10.8.0
+
 # 1.2.0
 - Bump `axios` to >=1.8.4
 - Upgrade dev dependencies
