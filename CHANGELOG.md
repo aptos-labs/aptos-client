@@ -5,11 +5,11 @@ adheres to the format set out by [Keep a Changelog](https://keepachangelog.com/e
 
 # Unreleased
 
+# Released
+
 # 2.1.0
 
 - Make `http2` optional. Default to true
-
-# Released
 
 # 2.0.0
 
