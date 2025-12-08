@@ -14,18 +14,18 @@ const cookieJar = new CookieJar();
  * @param requestOptions
  */
 export default async function aptosClient<Res>(
-  requestOptions: AptosClientRequest,
+  requestOptions: AptosClientRequest
 ): Promise<AptosClientResponse<Res>> {
   return jsonRequest<Res>(requestOptions);
 }
 
 export async function jsonRequest<Res>(
-  requestOptions: AptosClientRequest,
+  requestOptions: AptosClientRequest
 ): Promise<AptosClientResponse<Res>> {
-  const { params, method, url, headers, body } = requestOptions;
+  const { params, method, url, headers, body, http2 = true } = requestOptions;
 
   const request: OptionsOfJSONResponseBody = {
-    http2: true,
+    http2,
     searchParams: convertBigIntToString(params),
     method,
     url,
@@ -84,12 +84,12 @@ export async function jsonRequest<Res>(
  * @param requestOptions
  */
 export async function bcsRequest(
-  requestOptions: AptosClientRequest,
+  requestOptions: AptosClientRequest
 ): Promise<AptosClientResponse<Buffer>> {
-  const { params, method, url, headers, body } = requestOptions;
+  const { params, method, url, headers, body, http2 = true } = requestOptions;
 
   const request: OptionsOfBufferResponseBody = {
-    http2: true,
+    http2,
     searchParams: convertBigIntToString(params),
     method,
     url,
