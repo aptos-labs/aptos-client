@@ -15,4 +15,5 @@ export type AptosClientRequest = {
   params?: any;
   headers?: any;
   overrides?: any;
+  http2?: boolean;
 };

@@ -6,13 +6,13 @@ import { AptosClientRequest, AptosClientResponse } from "./types";
  * @param options
  */
 export default async function aptosClient<Res>(
-  options: AptosClientRequest,
+  options: AptosClientRequest
 ): Promise<AptosClientResponse<Res>> {
   return jsonRequest<Res>(options);
 }
 
 export async function jsonRequest<Res>(
-  options: AptosClientRequest,
+  options: AptosClientRequest
 ): Promise<AptosClientResponse<Res>> {
   const { requestUrl, requestConfig } = buildRequest(options);
 
@@ -35,7 +35,7 @@ export async function jsonRequest<Res>(
  * @param options
  */
 export async function bcsRequest(
-  options: AptosClientRequest,
+  options: AptosClientRequest
 ): Promise<AptosClientResponse<ArrayBuffer>> {
   const { requestUrl, requestConfig } = buildRequest(options);
 
