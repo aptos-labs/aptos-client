@@ -17,10 +17,7 @@ export class CookieJar {
     }
 
     const cookie = CookieJar.parse(cookieStr);
-    this.jar.set(key, [
-      ...(this.jar.get(key)?.filter((c) => c.name !== cookie.name) || []),
-      cookie,
-    ]);
+    this.jar.set(key, [...(this.jar.get(key)?.filter((c) => c.name !== cookie.name) || []), cookie]);
   }
 
   getCookies(url: URL): Cookie[] {
@@ -30,12 +27,7 @@ export class CookieJar {
     }
 
     // Filter out expired cookies
-    return (
-      this.jar
-        .get(key)
-        ?.filter((cookie) => !cookie.expires || cookie.expires > new Date()) ||
-      []
-    );
+    return this.jar.get(key)?.filter((cookie) => !cookie.expires || cookie.expires > new Date()) || [];
   }
 
   static parse(str: string): Cookie {
@@ -68,11 +60,7 @@ export class CookieJar {
       }
 
       const nameLow = name.toLowerCase();
-      const val =
-        // eslint-disable-next-line quotes
-        value?.charAt(0) === "'" || value?.charAt(0) === '"'
-          ? value?.slice(1, -1)
-          : value;
+      const val = value?.charAt(0) === "'" || value?.charAt(0) === '"' ? value?.slice(1, -1) : value;
       if (nameLow === "expires") {
         cookie.expires = new Date(val);
       }
