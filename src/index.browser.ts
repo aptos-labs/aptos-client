@@ -1,19 +1,15 @@
-import { AptosClientRequest, AptosClientResponse } from "./types";
+import type { AptosClientRequest, AptosClientResponse } from "./types";
 
 /**
  * Used for JSON responses
  *
  * @param options
  */
-export default async function aptosClient<Res>(
-  options: AptosClientRequest
-): Promise<AptosClientResponse<Res>> {
+export default async function aptosClient<Res>(options: AptosClientRequest): Promise<AptosClientResponse<Res>> {
   return jsonRequest<Res>(options);
 }
 
-export async function jsonRequest<Res>(
-  options: AptosClientRequest
-): Promise<AptosClientResponse<Res>> {
+export async function jsonRequest<Res>(options: AptosClientRequest): Promise<AptosClientResponse<Res>> {
   const { requestUrl, requestConfig } = buildRequest(options);
 
   const res = await fetch(requestUrl, requestConfig);
@@ -34,9 +30,7 @@ export async function jsonRequest<Res>(
  * @experimental
  * @param options
  */
-export async function bcsRequest(
-  options: AptosClientRequest
-): Promise<AptosClientResponse<ArrayBuffer>> {
+export async function bcsRequest(options: AptosClientRequest): Promise<AptosClientResponse<ArrayBuffer>> {
   const { requestUrl, requestConfig } = buildRequest(options);
 
   const res = await fetch(requestUrl, requestConfig);
@@ -57,10 +51,7 @@ function buildRequest(options: AptosClientRequest) {
     headers.append(key, String(value));
   });
 
-  const body =
-    options.body instanceof Uint8Array
-      ? options.body
-      : JSON.stringify(options.body);
+  const body = options.body instanceof Uint8Array ? options.body : JSON.stringify(options.body);
 
   const withCredentialsOption = options.overrides?.WITH_CREDENTIALS;
   let credentials: RequestCredentials;
@@ -86,8 +77,7 @@ function buildRequest(options: AptosClientRequest) {
     }
   });
 
-  const requestUrl =
-    options.url + (params.size > 0 ? `?${params.toString()}` : "");
+  const requestUrl = options.url + (params.size > 0 ? `?${params.toString()}` : "");
 
   return { requestUrl, requestConfig };
 }

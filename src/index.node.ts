@@ -1,11 +1,11 @@
 import got, {
-  OptionsOfBufferResponseBody,
-  OptionsOfJSONResponseBody,
-  RequestError,
-  Response,
+  type OptionsOfBufferResponseBody,
+  type OptionsOfJSONResponseBody,
+  type RequestError,
+  type Response,
 } from "got";
 import { CookieJar } from "./cookieJar";
-import { AptosClientRequest, AptosClientResponse } from "./types";
+import type { AptosClientRequest, AptosClientResponse } from "./types";
 
 const cookieJar = new CookieJar();
 
@@ -13,15 +13,11 @@ const cookieJar = new CookieJar();
  * Used for JSON responses
  * @param requestOptions
  */
-export default async function aptosClient<Res>(
-  requestOptions: AptosClientRequest
-): Promise<AptosClientResponse<Res>> {
+export default async function aptosClient<Res>(requestOptions: AptosClientRequest): Promise<AptosClientResponse<Res>> {
   return jsonRequest<Res>(requestOptions);
 }
 
-export async function jsonRequest<Res>(
-  requestOptions: AptosClientRequest
-): Promise<AptosClientResponse<Res>> {
+export async function jsonRequest<Res>(requestOptions: AptosClientRequest): Promise<AptosClientResponse<Res>> {
   const { params, method, url, headers, body, http2 = true } = requestOptions;
 
   const request: OptionsOfJSONResponseBody = {
@@ -37,10 +33,7 @@ export async function jsonRequest<Res>(
           const cookies = cookieJar.getCookies(new URL(options.url!));
 
           if (cookies?.length > 0 && options.headers) {
-            /* eslint-disable no-param-reassign */
-            options.headers.cookie = cookies
-              .map((cookie: any) => `${cookie.name}=${cookie.value}`)
-              .join("; ");
+            options.headers.cookie = cookies.map((cookie: any) => `${cookie.name}=${cookie.value}`).join("; ");
           }
         },
       ],
@@ -83,9 +76,7 @@ export async function jsonRequest<Res>(
  * @experimental
  * @param requestOptions
  */
-export async function bcsRequest(
-  requestOptions: AptosClientRequest
-): Promise<AptosClientResponse<Buffer>> {
+export async function bcsRequest(requestOptions: AptosClientRequest): Promise<AptosClientResponse<Buffer>> {
   const { params, method, url, headers, body, http2 = true } = requestOptions;
 
   const request: OptionsOfBufferResponseBody = {
@@ -101,10 +92,7 @@ export async function bcsRequest(
           const cookies = cookieJar.getCookies(new URL(options.url!));
 
           if (cookies?.length > 0 && options.headers) {
-            /* eslint-disable no-param-reassign */
-            options.headers.cookie = cookies
-              .map((cookie: any) => `${cookie.name}=${cookie.value}`)
-              .join("; ");
+            options.headers.cookie = cookies.map((cookie: any) => `${cookie.name}=${cookie.value}`).join("; ");
           }
         },
       ],
@@ -170,12 +158,10 @@ function convertBigIntToString(obj: any): any {
   if (!obj) return result;
 
   Object.entries(obj).forEach(([key, value]) => {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      if (typeof value === "bigint") {
-        result[key] = String(value);
-      } else {
-        result[key] = value;
-      }
+    if (typeof value === "bigint") {
+      result[key] = String(value);
+    } else {
+      result[key] = value;
     }
   });
 
