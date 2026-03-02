@@ -37,7 +37,7 @@
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "fmt": "biome format --write",
-    "check": "biome check --write"
+    "check": "biome check"
   },
   "repository": {
     "type": "git",
