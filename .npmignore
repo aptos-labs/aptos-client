@@ -1,6 +1,5 @@
 node_modules
 tsconfig.json
 tsup.config.js
-.prettierignore
+biome.json
 .gitignore
-.eslintignore

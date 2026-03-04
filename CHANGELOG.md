@@ -7,6 +7,14 @@ adheres to the format set out by [Keep a Changelog](https://keepachangelog.com/e
 
 # Released
 
+# 2.2.0
+
+- Replace ESLint and Prettier with Biome for linting and formatting
+- Replace `ts-node` with `tsx`
+- Update devDependencies to latest versions (`typescript`, `tsup`, `@types/node`, `semver`)
+- Use `import type` for type-only imports
+- Bump TypeScript target from `es2020` to `es2022`
+
 # 2.1.0
 
 - Make `http2` optional. Default to true
