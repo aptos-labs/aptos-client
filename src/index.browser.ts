@@ -51,7 +51,7 @@ function buildRequest(options: AptosClientRequest) {
     headers.append(key, String(value));
   });
 
-  const body = options.body instanceof Uint8Array ? options.body.buffer as ArrayBuffer : JSON.stringify(options.body);
+  const body = options.body instanceof Uint8Array ? (options.body.buffer as ArrayBuffer) : JSON.stringify(options.body);
 
   const withCredentialsOption = options.overrides?.WITH_CREDENTIALS;
   let credentials: RequestCredentials;
