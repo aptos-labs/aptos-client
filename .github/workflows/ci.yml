@@ -49,7 +49,6 @@ jobs:
       - name: Build aptos-client from source
         working-directory: aptos-client
         run: |
-          corepack enable
           pnpm install --frozen-lockfile
           pnpm build
           pnpm pack --pack-destination ../
