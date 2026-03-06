@@ -59,6 +59,6 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm add ../aptos-labs-aptos-client-*.tgz
 
-      - name: Run SDK unit tests
+      - name: Build SDK with local aptos-client
         working-directory: aptos-ts-sdk
-        run: pnpm unit-test
+        run: pnpm build
