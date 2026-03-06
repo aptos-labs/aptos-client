@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm check
+
+      - run: pnpm build
+
+  sdk-compat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: aptos-client
+
+      - uses: actions/checkout@v4
+        with:
+          repository: aptos-labs/aptos-ts-sdk
+          path: aptos-ts-sdk
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: aptos-ts-sdk/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: aptos-ts-sdk/pnpm-lock.yaml
+
+      - name: Build aptos-client from source
+        working-directory: aptos-client
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+          pnpm pack --pack-destination ../
+
+      - name: Install SDK with local aptos-client
+        working-directory: aptos-ts-sdk
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm add ../aptos-labs-aptos-client-*.tgz
+
+      - name: Run SDK unit tests
+        working-directory: aptos-ts-sdk
+        run: pnpm unit-test
