@@ -10,9 +10,13 @@
  * @module index.fetch
  */
 import { CookieJar } from "./cookieJar";
-import type { AptosClientRequest, AptosClientResponse } from "./types";
+import type { AptosClientRequest, AptosClientResponse, CookieJarLike } from "./types";
 
-const cookieJar = new CookieJar();
+export { CookieJar } from "./cookieJar";
+
+const defaultCookieJar = new CookieJar();
+
+let http2Warned = false;
 
 /**
  * Send a JSON request to an Aptos API endpoint.
@@ -46,10 +50,10 @@ export default async function aptosClient<Res>(options: AptosClientRequest): Pro
  * @param options - Request configuration.
  */
 export async function jsonRequest<Res>(options: AptosClientRequest): Promise<AptosClientResponse<Res>> {
-  const { requestUrl, requestConfig } = buildRequest(options);
+  const { requestUrl, requestConfig, jar } = buildRequest(options);
 
   const res = await fetch(requestUrl, requestConfig);
-  handleSetCookieHeaders(res, requestUrl);
+  handleSetCookieHeaders(res, requestUrl, jar);
   const data = await parseJsonSafely(res, requestUrl);
 
   return {
@@ -70,10 +74,10 @@ export async function jsonRequest<Res>(options: AptosClientRequest): Promise<Apt
  * @param options - Request configuration.
  */
 export async function bcsRequest(options: AptosClientRequest): Promise<AptosClientResponse<ArrayBuffer>> {
-  const { requestUrl, requestConfig } = buildRequest(options);
+  const { requestUrl, requestConfig, jar } = buildRequest(options);
 
   const res = await fetch(requestUrl, requestConfig);
-  handleSetCookieHeaders(res, requestUrl);
+  handleSetCookieHeaders(res, requestUrl, jar);
   const data = await res.arrayBuffer();
 
   return {
@@ -87,10 +91,21 @@ export async function bcsRequest(options: AptosClientRequest): Promise<AptosClie
 
 /** Build the URL and `RequestInit` from the caller's options. @internal */
 function buildRequest(options: AptosClientRequest) {
+  if (options.method !== "GET" && options.method !== "POST") {
+    throw new Error(`Unsupported method: ${options.method}`);
+  }
+
+  if (!http2Warned && options.http2 !== undefined) {
+    http2Warned = true;
+    console.warn("[aptos-client] The `http2` option is only supported by the Node entry point and is ignored here.");
+  }
+
+  const jar = options.cookieJar ?? defaultCookieJar;
+
   const headers = new Headers();
   for (const [key, value] of Object.entries(options?.headers ?? {})) {
     if (value !== undefined) {
-      headers.append(key, String(value));
+      headers.set(key, String(value));
     }
   }
 
@@ -98,24 +113,23 @@ function buildRequest(options: AptosClientRequest) {
   const requestUrl = new URL(options.url);
   for (const [key, value] of Object.entries(options.params ?? {})) {
     if (value !== undefined) {
+      // String(value) correctly handles bigint: String(12345n) === "12345"
       requestUrl.searchParams.append(key, String(value));
     }
   }
 
   // Inject cookies from the jar (merge with any caller-supplied Cookie header)
-  const cookies = cookieJar.getCookies(requestUrl);
+  const cookies = jar.getCookies(requestUrl);
   if (cookies.length > 0) {
     const jarCookies = cookies.map((c) => `${c.name}=${c.value}`).join("; ");
     const existing = headers.get("cookie");
     headers.set("cookie", existing ? `${existing}; ${jarCookies}` : jarCookies);
   }
 
-  const body =
+  // Uint8Array is a valid BodyInit at runtime (ArrayBufferView) — no copy needed
+  const body: BodyInit | undefined =
     options.body instanceof Uint8Array
-      ? (options.body.buffer as ArrayBuffer).slice(
-          options.body.byteOffset,
-          options.body.byteOffset + options.body.byteLength,
-        )
+      ? (options.body as unknown as BodyInit)
       : options.body
         ? JSON.stringify(options.body)
         : undefined;
@@ -126,7 +140,7 @@ function buildRequest(options: AptosClientRequest) {
     body,
   };
 
-  return { requestUrl: requestUrl.toString(), requestConfig };
+  return { requestUrl: requestUrl.toString(), requestConfig, jar };
 }
 
 /** Parse JSON safely, returning `null` for empty or no-content responses. @internal */
@@ -142,18 +156,19 @@ async function parseJsonSafely(res: Response, url: string): Promise<any> {
     return JSON.parse(text);
   } catch {
     const pathname = new URL(url).pathname;
-    throw new Error(`Failed to parse JSON response from ${pathname} (status ${res.status}): ${text.slice(0, 200)}`);
+    const err = new Error(`Failed to parse JSON response from ${pathname} (status ${res.status})`);
+    Object.defineProperty(err, "responseBody", { value: text.slice(0, 200), enumerable: false });
+    throw err;
   }
 }
 
 /** Store any `Set-Cookie` headers from the response in the cookie jar. @internal */
-function handleSetCookieHeaders(res: Response, requestUrl: string) {
-  // getSetCookie() is supported in Deno 1.33+, Bun 1.0+, Node 20+
-  const setCookies = res.headers.getSetCookie?.();
-  if (setCookies && setCookies.length > 0) {
+function handleSetCookieHeaders(res: Response, requestUrl: string, jar: CookieJarLike) {
+  const setCookies = res.headers.getSetCookie();
+  if (setCookies.length > 0) {
     const url = new URL(requestUrl);
     for (const c of setCookies) {
-      cookieJar.setCookie(url, c);
+      jar.setCookie(url, c);
     }
   }
 }

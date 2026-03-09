@@ -8,12 +8,14 @@
  * point does not use a {@link CookieJar}.
  *
  * The `credentials` mode on each request is controlled via
- * `overrides.WITH_CREDENTIALS` (`true` → `"include"`, `false` → `"omit"`,
- * default `"include"`).
+ * `overrides.WITH_CREDENTIALS` (`false` → `"omit"`,
+ * default/`true` → `"include"`).
  *
  * @module index.browser
  */
 import type { AptosClientRequest, AptosClientResponse } from "./types";
+
+let http2Warned = false;
 
 /**
  * Send a JSON request to an Aptos API endpoint.
@@ -87,25 +89,34 @@ async function parseJsonSafely(res: Response, url: string): Promise<any> {
     return JSON.parse(text);
   } catch {
     const pathname = new URL(url).pathname;
-    throw new Error(`Failed to parse JSON response from ${pathname} (status ${res.status}): ${text.slice(0, 200)}`);
+    const err = new Error(`Failed to parse JSON response from ${pathname} (status ${res.status})`);
+    Object.defineProperty(err, "responseBody", { value: text.slice(0, 200), enumerable: false });
+    throw err;
   }
 }
 
 /** Build the URL and `RequestInit` from the caller's options. @internal */
 function buildRequest(options: AptosClientRequest) {
+  if (options.method !== "GET" && options.method !== "POST") {
+    throw new Error(`Unsupported method: ${options.method}`);
+  }
+
+  if (!http2Warned && options.http2 !== undefined) {
+    http2Warned = true;
+    console.warn("[aptos-client] The `http2` option is only supported by the Node entry point and is ignored here.");
+  }
+
   const headers = new Headers();
   Object.entries(options?.headers ?? {}).forEach(([key, value]) => {
     if (value !== undefined) {
-      headers.append(key, String(value));
+      headers.set(key, String(value));
     }
   });
 
-  const body =
+  // Uint8Array is a valid BodyInit at runtime (ArrayBufferView) — no copy needed
+  const body: BodyInit | undefined =
     options.body instanceof Uint8Array
-      ? (options.body.buffer as ArrayBuffer).slice(
-          options.body.byteOffset,
-          options.body.byteOffset + options.body.byteLength,
-        )
+      ? (options.body as unknown as BodyInit)
       : options.body
         ? JSON.stringify(options.body)
         : undefined;
@@ -122,6 +133,7 @@ function buildRequest(options: AptosClientRequest) {
   const requestUrl = new URL(options.url);
   Object.entries(options.params ?? {}).forEach(([key, value]) => {
     if (value !== undefined) {
+      // String(value) correctly handles bigint: String(12345n) === "12345"
       requestUrl.searchParams.append(key, String(value));
     }
   });

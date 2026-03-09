@@ -23,6 +23,19 @@ export type AptosClientResponse<Res> = {
 };
 
 /**
+ * Minimal cookie jar interface for per-request cookie isolation.
+ *
+ * @remarks
+ * Implement this interface or use the {@link CookieJar} class exported by
+ * the Node and fetch entry points. The browser entry point ignores this
+ * option (cookies are managed by the browser engine).
+ */
+export interface CookieJarLike {
+  getCookies(url: URL): { name: string; value: string }[];
+  setCookie(url: URL, cookieStr: string): void;
+}
+
+/**
  * Options accepted by every `aptosClient` call.
  */
 export type AptosClientRequest = {
@@ -57,4 +70,14 @@ export type AptosClientRequest = {
    * HTTP/2 automatically via ALPN — this option is ignored.
    */
   http2?: boolean;
+  /**
+   * Override the module-level cookie jar for this request.
+   *
+   * @remarks
+   * By default, the Node and fetch entry points use a shared module-level
+   * `CookieJar` singleton. In multi-tenant or server-side environments,
+   * pass a per-request jar to prevent cross-request cookie leakage.
+   * The browser entry point ignores this option.
+   */
+  cookieJar?: CookieJarLike;
 };

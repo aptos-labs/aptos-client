@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src", "test/server.ts", "test/node.test.ts", "test/fetch.test.ts", "test/browser.test.ts"],
+  "compilerOptions": {
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "allowImportingTsExtensions": true
+  }
+}

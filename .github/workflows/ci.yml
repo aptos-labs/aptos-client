@@ -26,6 +26,12 @@ jobs:
 
       - run: pnpm build
 
+      - name: Verify declaration files exist
+        run: |
+          test -f dist/fetch/index.fetch.d.mts   || { echo "Missing dist/fetch/index.fetch.d.mts"; exit 1; }
+          test -f dist/node/index.node.d.ts       || { echo "Missing dist/node/index.node.d.ts"; exit 1; }
+          test -f dist/browser/index.browser.d.ts || { echo "Missing dist/browser/index.browser.d.ts"; exit 1; }
+
       - run: pnpm test
 
   sdk-compat:
@@ -60,7 +66,7 @@ jobs:
       - name: Install SDK with local aptos-client
         working-directory: aptos-ts-sdk
         run: |
-          pnpm install
+          pnpm install --frozen-lockfile
           pnpm add ../aptos-labs-aptos-client-*.tgz
 
       - name: Build SDK with local aptos-client

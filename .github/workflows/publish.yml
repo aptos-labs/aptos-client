@@ -48,6 +48,12 @@ jobs:
 
       - run: pnpm build
 
+      - name: Verify declaration files exist
+        run: |
+          test -f dist/fetch/index.fetch.d.mts   || { echo "Missing dist/fetch/index.fetch.d.mts"; exit 1; }
+          test -f dist/node/index.node.d.ts       || { echo "Missing dist/node/index.node.d.ts"; exit 1; }
+          test -f dist/browser/index.browser.d.ts || { echo "Missing dist/browser/index.browser.d.ts"; exit 1; }
+
       - run: pnpm test
 
       - run: npm install -g npm@latest

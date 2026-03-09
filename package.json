@@ -16,23 +16,23 @@
       "import": "./dist/fetch/index.fetch.mjs"
     },
     "browser": {
-      "require": "./dist/browser/index.browser.js",
       "types": "./dist/browser/index.browser.d.ts",
+      "require": "./dist/browser/index.browser.js",
       "import": "./dist/browser/index.browser.mjs"
     },
     "react-native": {
-      "require": "./dist/fetch/index.fetch.js",
       "types": "./dist/fetch/index.fetch.d.mts",
+      "require": "./dist/fetch/index.fetch.js",
       "import": "./dist/fetch/index.fetch.mjs"
     },
     "node": {
-      "require": "./dist/node/index.node.js",
       "types": "./dist/node/index.node.d.ts",
+      "require": "./dist/node/index.node.js",
       "import": "./dist/node/index.node.mjs"
     },
     "default": {
-      "require": "./dist/fetch/index.fetch.js",
       "types": "./dist/fetch/index.fetch.d.mts",
+      "require": "./dist/fetch/index.fetch.js",
       "import": "./dist/fetch/index.fetch.mjs"
     }
   },
@@ -63,7 +63,7 @@
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "fmt": "biome format --write",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --project tsconfig.test.json --noEmit",
     "check": "biome check"
   },
   "repository": {

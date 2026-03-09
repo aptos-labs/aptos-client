@@ -11,9 +11,11 @@
  */
 import { Agent } from "undici";
 import { CookieJar } from "./cookieJar";
-import type { AptosClientRequest, AptosClientResponse } from "./types";
+import type { AptosClientRequest, AptosClientResponse, CookieJarLike } from "./types";
 
-const cookieJar = new CookieJar();
+export { CookieJar } from "./cookieJar";
+
+const defaultCookieJar = new CookieJar();
 
 /** One dispatcher per origin + HTTP/2 mode for connection reuse. */
 const dispatcherCache = new Map<string, Agent>();
@@ -78,13 +80,14 @@ async function doRequest<Res>(
   mode: ResponseMode,
 ): Promise<AptosClientResponse<Res>> {
   const { url, method, params, headers, body, http2 = true } = requestOptions;
+  const jar = requestOptions.cookieJar ?? defaultCookieJar;
 
   if (method !== "GET" && method !== "POST") {
     throw new Error(`Unsupported method: ${method}`);
   }
 
   const requestUrl = buildUrl(url, params);
-  const requestHeaders = buildHeaders(requestUrl, headers);
+  const requestHeaders = buildHeaders(requestUrl, headers, jar);
   const dispatcher = getDispatcher(requestUrl.origin, http2);
 
   const init: RequestInit & { dispatcher?: Agent } = {
@@ -99,7 +102,7 @@ async function doRequest<Res>(
 
   const res = await fetch(requestUrl, init);
 
-  applySetCookieHeaders(requestUrl, res.headers);
+  applySetCookieHeaders(requestUrl, res.headers, jar);
 
   const data = mode === "json" ? await parseJsonSafely(res, requestUrl) : await res.arrayBuffer();
 
@@ -175,7 +178,7 @@ function buildUrl(url: string, params?: AptosClientRequest["params"]): URL {
  * Merge caller-supplied headers with cookies from the jar.
  * @internal
  */
-function buildHeaders(url: URL, headers?: AptosClientRequest["headers"]): Headers {
+function buildHeaders(url: URL, headers: AptosClientRequest["headers"] | undefined, jar: CookieJarLike): Headers {
   const result = new Headers();
 
   Object.entries(headers ?? {}).forEach(([key, value]) => {
@@ -184,7 +187,7 @@ function buildHeaders(url: URL, headers?: AptosClientRequest["headers"]): Header
     }
   });
 
-  const cookies = cookieJar.getCookies(url);
+  const cookies = jar.getCookies(url);
   if (cookies.length > 0) {
     const jarCookies = cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ");
     const existing = result.get("cookie");
@@ -196,12 +199,14 @@ function buildHeaders(url: URL, headers?: AptosClientRequest["headers"]): Header
 
 /**
  * Serialize a request body to a `BodyInit`-compatible value.
- * `Uint8Array` is unwrapped to its backing `ArrayBuffer`; everything else is JSON-stringified.
+ * `Uint8Array` is passed directly (it is a valid `ArrayBufferView`/`BodyInit`);
+ * everything else is JSON-stringified.
  * @internal
  */
 function serializeBody(body: Record<string, unknown> | Uint8Array): BodyInit {
   if (body instanceof Uint8Array) {
-    return (body.buffer as ArrayBuffer).slice(body.byteOffset, body.byteOffset + body.byteLength);
+    // Uint8Array is a valid BodyInit at runtime (ArrayBufferView), cast for TS compatibility
+    return body as unknown as BodyInit;
   }
   return JSON.stringify(body);
 }
@@ -223,14 +228,16 @@ async function parseJsonSafely(res: Response, url: URL): Promise<any> {
   try {
     return JSON.parse(text);
   } catch {
-    throw new Error(`Failed to parse JSON response from ${url.pathname} (status ${res.status}): ${text.slice(0, 200)}`);
+    const err = new Error(`Failed to parse JSON response from ${url.pathname} (status ${res.status})`);
+    Object.defineProperty(err, "responseBody", { value: text.slice(0, 200), enumerable: false });
+    throw err;
   }
 }
 
 /** Store any `Set-Cookie` headers from the response in the cookie jar. @internal */
-function applySetCookieHeaders(url: URL, headers: Headers): void {
+function applySetCookieHeaders(url: URL, headers: Headers, jar: CookieJarLike): void {
   for (const cookie of headers.getSetCookie()) {
-    cookieJar.setCookie(url, cookie);
+    jar.setCookie(url, cookie);
   }
 }
 

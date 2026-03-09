@@ -5,6 +5,7 @@ interface Cookie {
   expires?: Date;
   sameSite?: "Lax" | "None" | "Strict";
   secure?: boolean;
+  httpOnly?: boolean;
 }
 
 /**
@@ -15,6 +16,11 @@ interface Cookie {
  * filtered out lazily when {@link getCookies} is called. The browser entry
  * point delegates cookie handling to the browser engine and does not use
  * this class.
+ *
+ * **Note:** A single module-level `CookieJar` instance is shared across all
+ * requests in the same process. In multi-tenant server-side environments,
+ * create a separate instance and pass it via {@link AptosClientRequest.cookieJar}
+ * to avoid cross-request cookie leakage.
  */
 export class CookieJar {
   constructor(private jar = new Map<string, Cookie[]>()) {}
@@ -31,6 +37,11 @@ export class CookieJar {
       cookie = CookieJar.parse(cookieStr);
     } catch {
       return; // Silently skip malformed cookies, matching browser behavior
+    }
+
+    // RFC 6265bis: SameSite=None requires the Secure attribute
+    if (cookie.sameSite === "None" && !cookie.secure) {
+      return;
     }
 
     const key = url.origin.toLowerCase();
@@ -63,12 +74,17 @@ export class CookieJar {
     );
   }
 
+  /** Remove all stored cookies. Useful for test isolation. */
+  clear() {
+    this.jar.clear();
+  }
+
   /**
    * Parse a raw `Set-Cookie` header string into a {@link Cookie} object.
    *
    * @param str - Raw `Set-Cookie` header value.
    * @returns Parsed cookie.
-   * @throws If the cookie is malformed.
+   * @throws If the cookie is malformed or contains control characters.
    */
   static parse(str: string): Cookie {
     const parts = str.split(";").map((part) => part.trim());
@@ -82,6 +98,11 @@ export class CookieJar {
       }
       const name = parts[0].slice(0, eqIdx);
       const value = parts[0].slice(eqIdx + 1);
+
+      // Reject control characters that could enable header injection (CRLF, null)
+      if (hasControlChars(name) || hasControlChars(value)) {
+        throw new Error("Invalid cookie: name or value contains control characters");
+      }
 
       cookie = {
         name,
@@ -100,7 +121,15 @@ export class CookieJar {
       }
 
       const nameLow = name.toLowerCase();
-      const val = value?.charAt(0) === "'" || value?.charAt(0) === '"' ? value?.slice(1, -1) : value;
+      // Only strip quotes when both opening and closing characters match
+      let val = value;
+      if (value && value.length >= 2) {
+        const first = value.charAt(0);
+        const last = value.charAt(value.length - 1);
+        if ((first === '"' || first === "'") && first === last) {
+          val = value.slice(1, -1);
+        }
+      }
       if (nameLow === "expires" && val) {
         const date = new Date(val);
         if (!Number.isNaN(date.getTime())) {
@@ -116,8 +145,20 @@ export class CookieJar {
       if (nameLow === "secure") {
         cookie.secure = true;
       }
+      if (nameLow === "httponly") {
+        cookie.httpOnly = true;
+      }
     });
 
     return cookie;
   }
+}
+
+/** Check if a string contains CR, LF, or null characters. @internal */
+function hasControlChars(str: string): boolean {
+  for (let i = 0; i < str.length; i++) {
+    const code = str.charCodeAt(i);
+    if (code === 0x0d || code === 0x0a || code === 0x00) return true;
+  }
+  return false;
 }

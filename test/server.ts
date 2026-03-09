@@ -7,7 +7,10 @@ import { Buffer } from "node:buffer";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { createSecureServer, type Http2ServerRequest, type Http2ServerResponse } from "node:http2";
 
-// Pre-generated self-signed cert for localhost (valid 10 years, test-only)
+// Pre-generated self-signed cert for localhost (valid 10 years, test-only).
+// This is NOT a production credential — it covers only 127.0.0.1/localhost
+// and is used exclusively with NODE_TLS_REJECT_UNAUTHORIZED=0 in tests.
+// Security scanners: this key is intentionally committed for test infrastructure.
 const TEST_KEY = `-----BEGIN PRIVATE KEY-----
 MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDv/g9MAABv9yRl
 dTUEoX04fyuGt7C05FKWW1fEnjLvvLX6kG0aKvmZ96bqgnzREOXPPqzz2Qv5mEJp
