@@ -207,7 +207,7 @@ function buildHeaders(url: URL, headers: AptosClientRequest["headers"] | undefin
  * everything else is JSON-stringified.
  * @internal
  */
-function serializeBody(body: Record<string, unknown> | Uint8Array): BodyInit {
+function serializeBody(body: unknown): BodyInit {
   if (body instanceof Uint8Array) {
     // Uint8Array is a valid BodyInit at runtime (ArrayBufferView), cast for TS compatibility
     return body as unknown as BodyInit;

@@ -47,8 +47,15 @@ export type AptosClientRequest = {
   url: string;
   /** HTTP method — only `GET` and `POST` are supported. */
   method: "GET" | "POST";
-  /** Request body. Objects are JSON-serialized; `Uint8Array` is sent as binary. */
-  body?: Record<string, unknown> | Uint8Array;
+  /**
+   * Request body. Objects are JSON-serialized; `Uint8Array` is sent as binary.
+   *
+   * @remarks
+   * Typed as `unknown` for compatibility with the SDK's generic
+   * `ClientRequest<Req>`. At runtime, values are handled as either
+   * `Uint8Array` (sent verbatim) or anything else (`JSON.stringify`).
+   */
+  body?: unknown;
   /** Query-string parameters appended to the URL. `bigint` values are stringified automatically. */
   params?: Record<string, string | number | bigint | boolean | undefined>;
   /** Additional HTTP headers merged into the request. */

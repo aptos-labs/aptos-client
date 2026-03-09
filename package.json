@@ -58,7 +58,7 @@
     "test:node": "tsx --test test/node.test.ts",
     "test:fetch": "tsx --test test/fetch.test.ts",
     "test:browser": "tsx --test test/browser.test.ts",
-    "test:deno": "deno test --allow-net=127.0.0.1 --allow-run=npx --allow-read=. --allow-env=NODE_TLS_REJECT_UNAUTHORIZED --unsafely-ignore-certificate-errors=127.0.0.1 test/deno.integration.ts",
+    "test:deno": "deno test --allow-net=127.0.0.1 --allow-run=npx --allow-read=. --allow-env --unsafely-ignore-certificate-errors=127.0.0.1 test/deno.integration.ts",
     "test:bun": "bun test ./test/bun.integration.ts",
     "lint": "biome check",
     "lint:fix": "biome check --write",
