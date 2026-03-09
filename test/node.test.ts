@@ -71,6 +71,18 @@ describe("node client (undici)", () => {
     assert.deepEqual([...bytes], [0xde, 0xad, 0xbe, 0xef]);
   });
 
+  it("204 No Content returns null data", async () => {
+    const res = await jsonRequest({ url: `${h1.url}/no-content`, method: "GET" });
+    assert.equal(res.status, 204);
+    assert.equal(res.data, null);
+  });
+
+  it("empty body returns null data", async () => {
+    const res = await jsonRequest({ url: `${h1.url}/empty-body`, method: "GET" });
+    assert.equal(res.status, 200);
+    assert.equal(res.data, null);
+  });
+
   it("error response returns status without throwing", async () => {
     const res = await jsonRequest({ url: `${h1.url}/error`, method: "GET" });
     assert.equal(res.status, 400);

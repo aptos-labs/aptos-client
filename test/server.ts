@@ -65,6 +65,7 @@ function handler(req: Req, res: Res) {
   req.on("data", (chunk: Buffer) => chunks.push(chunk));
   req.on("end", () => {
     const body = Buffer.concat(chunks);
+    // biome-ignore lint/style/noNonNullAssertion: url is always present in request handler
     const parsedUrl = new URL(req.url!, `http://localhost`);
     const httpVersion = req.httpVersion; // "2.0" or "1.1"
 
@@ -109,6 +110,19 @@ function handler(req: Req, res: Res) {
       return;
     }
 
+    if (parsedUrl.pathname === "/no-content") {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
+    if (parsedUrl.pathname === "/empty-body") {
+      res.setHeader("content-type", "application/json");
+      res.writeHead(200);
+      res.end("");
+      return;
+    }
+
     if (parsedUrl.pathname === "/error") {
       res.setHeader("content-type", "application/json");
       res.writeHead(400);
@@ -131,6 +145,7 @@ export function startH1Server(): Promise<TestServer> {
   return new Promise((resolve) => {
     const server = createServer(handler);
     server.listen(0, "127.0.0.1", () => {
+      // biome-ignore lint/style/noNonNullAssertion: address is available inside listen callback
       const addr = server.address()!;
       const port = typeof addr === "string" ? addr : addr.port;
       resolve({
@@ -145,6 +160,7 @@ export function startH2Server(): Promise<TestServer> {
   return new Promise((resolve) => {
     const server = createSecureServer({ key: TEST_KEY, cert: TEST_CERT, allowHTTP1: true }, handler);
     server.listen(0, "127.0.0.1", () => {
+      // biome-ignore lint/style/noNonNullAssertion: address is available inside listen callback
       const addr = server.address()!;
       const port = typeof addr === "string" ? addr : addr.port;
       resolve({

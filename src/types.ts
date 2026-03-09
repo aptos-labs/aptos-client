@@ -41,10 +41,10 @@ export type AptosClientRequest = {
    *
    * @remarks
    * In the **browser** entry point, `overrides.WITH_CREDENTIALS` controls the
-   * `credentials` option on the `fetch` call (`true` → `"include"`,
-   * `false` → `"omit"`).
+   * `credentials` option on the `fetch` call (`false` → `"omit"`,
+   * default/`true` → `"include"`).
    */
-  overrides?: { WITH_CREDENTIALS?: boolean | RequestCredentials };
+  overrides?: { WITH_CREDENTIALS?: boolean };
   /**
    * Enable or disable HTTP/2 negotiation.
    *

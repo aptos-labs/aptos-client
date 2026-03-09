@@ -94,11 +94,20 @@ function buildRequest(options: AptosClientRequest) {
     }
   }
 
-  // Inject cookies from the jar
-  const url = new URL(options.url);
-  const cookies = cookieJar.getCookies(url);
+  // Build URL once — used for cookie lookup and query params
+  const requestUrl = new URL(options.url);
+  for (const [key, value] of Object.entries(options.params ?? {})) {
+    if (value !== undefined) {
+      requestUrl.searchParams.append(key, String(value));
+    }
+  }
+
+  // Inject cookies from the jar (merge with any caller-supplied Cookie header)
+  const cookies = cookieJar.getCookies(requestUrl);
   if (cookies.length > 0) {
-    headers.set("cookie", cookies.map((c) => `${c.name}=${c.value}`).join("; "));
+    const jarCookies = cookies.map((c) => `${c.name}=${c.value}`).join("; ");
+    const existing = headers.get("cookie");
+    headers.set("cookie", existing ? `${existing}; ${jarCookies}` : jarCookies);
   }
 
   const body =
@@ -116,13 +125,6 @@ function buildRequest(options: AptosClientRequest) {
     headers,
     body,
   };
-
-  const requestUrl = new URL(options.url);
-  for (const [key, value] of Object.entries(options.params ?? {})) {
-    if (value !== undefined) {
-      requestUrl.searchParams.append(key, String(value));
-    }
-  }
 
   return { requestUrl: requestUrl.toString(), requestConfig };
 }

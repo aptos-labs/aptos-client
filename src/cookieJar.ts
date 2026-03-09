@@ -3,7 +3,6 @@ interface Cookie {
   name: string;
   value: string;
   expires?: Date;
-  path?: string;
   sameSite?: "Lax" | "None" | "Strict";
   secure?: boolean;
 }
@@ -83,9 +82,6 @@ export class CookieJar {
       }
       const name = parts[0].slice(0, eqIdx);
       const value = parts[0].slice(eqIdx + 1);
-      if (!value) {
-        throw new Error("Invalid cookie");
-      }
 
       cookie = {
         name,
@@ -105,14 +101,11 @@ export class CookieJar {
 
       const nameLow = name.toLowerCase();
       const val = value?.charAt(0) === "'" || value?.charAt(0) === '"' ? value?.slice(1, -1) : value;
-      if (nameLow === "expires") {
+      if (nameLow === "expires" && val) {
         const date = new Date(val);
         if (!Number.isNaN(date.getTime())) {
           cookie.expires = date;
         }
-      }
-      if (nameLow === "path") {
-        cookie.path = val;
       }
       if (nameLow === "samesite") {
         const normalized = val?.toLowerCase();

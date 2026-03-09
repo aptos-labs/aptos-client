@@ -110,15 +110,7 @@ function buildRequest(options: AptosClientRequest) {
         ? JSON.stringify(options.body)
         : undefined;
 
-  const withCredentialsOption = options.overrides?.WITH_CREDENTIALS;
-  let credentials: RequestCredentials;
-  if (withCredentialsOption === false) {
-    credentials = "omit";
-  } else if (withCredentialsOption === true) {
-    credentials = "include";
-  } else {
-    credentials = withCredentialsOption ?? "include";
-  }
+  const credentials: RequestCredentials = options.overrides?.WITH_CREDENTIALS === false ? "omit" : "include";
 
   const requestConfig: RequestInit = {
     method: options.method,

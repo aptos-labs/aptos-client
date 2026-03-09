@@ -22,6 +22,8 @@ jobs:
 
       - run: pnpm check
 
+      - run: pnpm typecheck
+
       - run: pnpm build
 
       - run: pnpm test
@@ -58,7 +60,7 @@ jobs:
       - name: Install SDK with local aptos-client
         working-directory: aptos-ts-sdk
         run: |
-          pnpm install --frozen-lockfile
+          pnpm install
           pnpm add ../aptos-labs-aptos-client-*.tgz
 
       - name: Build SDK with local aptos-client

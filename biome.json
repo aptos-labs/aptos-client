@@ -16,8 +16,7 @@
     "rules": {
       "recommended": true,
       "style": {
-        "noDefaultExport": "off",
-        "noNonNullAssertion": "off"
+        "noDefaultExport": "off"
       },
       "suspicious": {
         "noExplicitAny": "off"

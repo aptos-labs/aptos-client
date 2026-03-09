@@ -136,8 +136,13 @@ function getDispatcher(origin: string, http2: boolean): Agent {
 
   // Evict oldest entry if cache is full
   if (dispatcherCache.size >= MAX_DISPATCHERS) {
+    // biome-ignore lint/style/noNonNullAssertion: cache size check guarantees entry exists
     const oldest = dispatcherCache.keys().next().value!;
-    dispatcherCache.get(oldest)!.destroy();
+    // biome-ignore lint/style/noNonNullAssertion: oldest key was just retrieved from cache
+    dispatcherCache
+      .get(oldest)!
+      .destroy()
+      .catch(() => {});
     dispatcherCache.delete(oldest);
   }
 
@@ -181,7 +186,9 @@ function buildHeaders(url: URL, headers?: AptosClientRequest["headers"]): Header
 
   const cookies = cookieJar.getCookies(url);
   if (cookies.length > 0) {
-    result.set("cookie", cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join("; "));
+    const jarCookies = cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ");
+    const existing = result.get("cookie");
+    result.set("cookie", existing ? `${existing}; ${jarCookies}` : jarCookies);
   }
 
   return result;

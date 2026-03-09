@@ -63,6 +63,7 @@
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "fmt": "biome format --write",
+    "typecheck": "tsc --noEmit",
     "check": "biome check"
   },
   "repository": {

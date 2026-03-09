@@ -6,6 +6,7 @@ export default defineConfig([
     format: ["cjs", "esm"],
     dts: true,
     outDir: "dist/node",
+    platform: "node",
   },
   {
     entry: { "index.browser": "src/index.browser.ts" },
