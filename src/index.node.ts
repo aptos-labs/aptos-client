@@ -101,7 +101,7 @@ async function doRequest<Res>(
 
   applySetCookieHeaders(requestUrl, res.headers);
 
-  const data = mode === "json" ? await parseJsonSafely(res) : await res.arrayBuffer();
+  const data = mode === "json" ? await parseJsonSafely(res, requestUrl) : await res.arrayBuffer();
 
   return {
     status: res.status,
@@ -194,22 +194,16 @@ function buildHeaders(url: URL, headers?: AptosClientRequest["headers"]): Header
  */
 function serializeBody(body: Record<string, unknown> | Uint8Array): BodyInit {
   if (body instanceof Uint8Array) {
-    return body.buffer as ArrayBuffer;
+    return (body.buffer as ArrayBuffer).slice(body.byteOffset, body.byteOffset + body.byteLength);
   }
-
-  const json = JSON.stringify(body);
-
-  // fetch requires BodyInit, and string is fine for JSON payloads.
-  return json;
+  return JSON.stringify(body);
 }
 
 /**
  * Parse a response body as JSON, returning `null` for empty or no-content responses.
  * @internal
  */
-async function parseJsonSafely(res: Response): Promise<any> {
-  // Matches the spirit of the current client: return parsed data for JSON paths.
-  // For empty bodies, return null rather than throwing on res.json().
+async function parseJsonSafely(res: Response, url: URL): Promise<any> {
   if (res.status === 204 || res.status === 205) {
     return null;
   }
@@ -219,7 +213,11 @@ async function parseJsonSafely(res: Response): Promise<any> {
     return null;
   }
 
-  return JSON.parse(text);
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`Failed to parse JSON response from ${url.pathname} (status ${res.status}): ${text.slice(0, 200)}`);
+  }
 }
 
 /** Store any `Set-Cookie` headers from the response in the cookie jar. @internal */

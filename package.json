@@ -40,6 +40,10 @@
     "./dist/node/index.node.mjs": "./dist/browser/index.browser.mjs",
     "./dist/node/index.node.js": "./dist/browser/index.browser.js"
   },
+  "react-native": {
+    "./dist/node/index.node.mjs": "./dist/fetch/index.fetch.mjs",
+    "./dist/node/index.node.js": "./dist/fetch/index.fetch.js"
+  },
   "main": "./dist/node/index.node.js",
   "module": "./dist/node/index.node.mjs",
   "sideEffects": false,
@@ -88,7 +92,8 @@
     "@types/node": "^22.19.15",
     "tsx": "^4.21.0",
     "tsup": "^8.5.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "undici": "^7.22.0"
   },
   "version": "3.0.0"
 }

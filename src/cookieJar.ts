@@ -65,8 +65,13 @@ export class CookieJar {
     let cookie: Cookie;
 
     if (parts.length > 0) {
-      const [name, value] = parts[0].split("=");
-      if (!name || !value) {
+      const eqIdx = parts[0].indexOf("=");
+      if (eqIdx < 1) {
+        throw new Error("Invalid cookie");
+      }
+      const name = parts[0].slice(0, eqIdx);
+      const value = parts[0].slice(eqIdx + 1);
+      if (!value) {
         throw new Error("Invalid cookie");
       }
 
@@ -79,7 +84,9 @@ export class CookieJar {
     }
 
     parts.slice(1).forEach((part) => {
-      const [name, value] = part.split("=");
+      const attrEqIdx = part.indexOf("=");
+      const name = attrEqIdx === -1 ? part : part.slice(0, attrEqIdx);
+      const value = attrEqIdx === -1 ? undefined : part.slice(attrEqIdx + 1);
       if (!name.trim()) {
         throw new Error("Invalid cookie");
       }

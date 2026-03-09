@@ -40,7 +40,7 @@ export async function jsonRequest<Res>(options: AptosClientRequest): Promise<Apt
   const { requestUrl, requestConfig } = buildRequest(options);
 
   const res = await fetch(requestUrl, requestConfig);
-  const data = await res.json();
+  const data = await parseJsonSafely(res, requestUrl);
 
   return {
     status: res.status,
@@ -74,6 +74,23 @@ export async function bcsRequest(options: AptosClientRequest): Promise<AptosClie
   };
 }
 
+/** Parse JSON safely, returning `null` for empty or no-content responses. @internal */
+async function parseJsonSafely(res: Response, url: string): Promise<any> {
+  if (res.status === 204 || res.status === 205) {
+    return null;
+  }
+  const text = await res.text();
+  if (text.length === 0) {
+    return null;
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    const pathname = new URL(url).pathname;
+    throw new Error(`Failed to parse JSON response from ${pathname} (status ${res.status}): ${text.slice(0, 200)}`);
+  }
+}
+
 /** Build the URL and `RequestInit` from the caller's options. @internal */
 function buildRequest(options: AptosClientRequest) {
   const headers = new Headers();
@@ -81,7 +98,15 @@ function buildRequest(options: AptosClientRequest) {
     headers.append(key, String(value));
   });
 
-  const body = options.body instanceof Uint8Array ? (options.body.buffer as ArrayBuffer) : JSON.stringify(options.body);
+  const body =
+    options.body instanceof Uint8Array
+      ? (options.body.buffer as ArrayBuffer).slice(
+          options.body.byteOffset,
+          options.body.byteOffset + options.body.byteLength,
+        )
+      : options.body
+        ? JSON.stringify(options.body)
+        : undefined;
 
   const withCredentialsOption = options.overrides?.WITH_CREDENTIALS;
   let credentials: RequestCredentials;
