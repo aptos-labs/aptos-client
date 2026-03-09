@@ -1,3 +1,4 @@
+/** A parsed cookie with optional attributes. */
 interface Cookie {
   name: string;
   value: string;
@@ -7,9 +8,24 @@ interface Cookie {
   secure?: boolean;
 }
 
+/**
+ * Minimal, origin-scoped cookie jar used by the Node and fetch entry points.
+ *
+ * @remarks
+ * Cookies are keyed by origin (scheme + host + port). Expired cookies are
+ * filtered out lazily when {@link getCookies} is called. The browser entry
+ * point delegates cookie handling to the browser engine and does not use
+ * this class.
+ */
 export class CookieJar {
   constructor(private jar = new Map<string, Cookie[]>()) {}
 
+  /**
+   * Store a `Set-Cookie` header value for the given URL's origin.
+   *
+   * @param url - The URL the response was received from.
+   * @param cookieStr - Raw `Set-Cookie` header string.
+   */
   setCookie(url: URL, cookieStr: string) {
     const key = url.origin.toLowerCase();
     if (!this.jar.has(key)) {
@@ -20,6 +36,12 @@ export class CookieJar {
     this.jar.set(key, [...(this.jar.get(key)?.filter((c) => c.name !== cookie.name) || []), cookie]);
   }
 
+  /**
+   * Return all non-expired cookies for the given URL's origin.
+   *
+   * @param url - The URL to match cookies against.
+   * @returns An array of {@link Cookie} objects (may be empty).
+   */
   getCookies(url: URL): Cookie[] {
     const key = url.origin.toLowerCase();
     if (!this.jar.get(key)) {
@@ -30,6 +52,13 @@ export class CookieJar {
     return this.jar.get(key)?.filter((cookie) => !cookie.expires || cookie.expires > new Date()) || [];
   }
 
+  /**
+   * Parse a raw `Set-Cookie` header string into a {@link Cookie} object.
+   *
+   * @param str - Raw `Set-Cookie` header value.
+   * @returns Parsed cookie.
+   * @throws If `str` is not a string or the cookie is malformed.
+   */
   static parse(str: string): Cookie {
     if (typeof str !== "string") {
       throw new Error("argument str must be a string");

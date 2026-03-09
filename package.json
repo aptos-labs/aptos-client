@@ -1,21 +1,39 @@
 {
   "name": "@aptos-labs/aptos-client",
   "description": "Client package for accessing the Aptos network API.",
-  "packageManager": "pnpm@10.10.0",
+  "packageManager": "pnpm@10.30.1",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "exports": {
+    "deno": {
+      "types": "./dist/fetch/index.fetch.d.mts",
+      "import": "./dist/fetch/index.fetch.mjs"
+    },
+    "bun": {
+      "types": "./dist/fetch/index.fetch.d.mts",
+      "import": "./dist/fetch/index.fetch.mjs"
+    },
     "browser": {
       "require": "./dist/browser/index.browser.js",
       "types": "./dist/browser/index.browser.d.ts",
       "import": "./dist/browser/index.browser.mjs"
     },
+    "react-native": {
+      "require": "./dist/fetch/index.fetch.js",
+      "types": "./dist/fetch/index.fetch.d.mts",
+      "import": "./dist/fetch/index.fetch.mjs"
+    },
     "node": {
       "require": "./dist/node/index.node.js",
       "types": "./dist/node/index.node.d.ts",
       "import": "./dist/node/index.node.mjs"
+    },
+    "default": {
+      "require": "./dist/fetch/index.fetch.js",
+      "types": "./dist/fetch/index.fetch.d.mts",
+      "import": "./dist/fetch/index.fetch.mjs"
     }
   },
   "browser": {
@@ -30,10 +48,14 @@
   ],
   "scripts": {
     "build:clean": "rm -rf dist",
-    "build": "pnpm build:clean && pnpm run _build:types && pnpm _build:node && pnpm _build:browser",
-    "_build:browser": "tsup src/index.browser.ts --format cjs,esm --dts --out-dir dist/browser",
-    "_build:node": "tsup src/index.node.ts --format cjs,esm --dts --out-dir dist/node",
+    "build": "pnpm build:clean && pnpm run _build:types && tsup",
     "_build:types": "tsc src/types.ts src/index.node.ts --outDir dist/types --declaration",
+    "test": "tsx --test test/node.test.ts test/fetch.test.ts test/browser.test.ts",
+    "test:node": "tsx --test test/node.test.ts",
+    "test:fetch": "tsx --test test/fetch.test.ts",
+    "test:browser": "tsx --test test/browser.test.ts",
+    "test:deno": "deno test --allow-all --unsafely-ignore-certificate-errors test/deno.integration.ts",
+    "test:bun": "bun test ./test/bun.integration.ts",
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "fmt": "biome format --write",
@@ -54,20 +76,19 @@
     "Aptos SDK"
   ],
   "peerDependencies": {
-    "got": "^11.8.6"
+    "undici": "^7.22.0"
+  },
+  "peerDependenciesMeta": {
+    "undici": {
+      "optional": true
+    }
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.4",
-    "@types/node": "^22.19.11",
-    "semver": "^7.7.4",
+    "@biomejs/biome": "^2.4.6",
+    "@types/node": "^22.19.15",
     "tsx": "^4.21.0",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
   },
-  "pnpm": {
-    "overrides": {
-      "glob@^10": "^10.5.0"
-    }
-  },
-  "version": "2.2.0"
+  "version": "3.0.0"
 }

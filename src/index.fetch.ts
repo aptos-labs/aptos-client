@@ -1,19 +1,18 @@
 /**
- * Browser HTTP client using the native `fetch()` API.
+ * Fetch-based HTTP client for runtimes with native HTTP/2 support.
  *
  * @remarks
- * Selected via the `"browser"` export condition. HTTP/2 negotiation is
- * handled by the browser engine — the {@link AptosClientRequest.http2 | http2}
- * option is ignored. Cookie handling is delegated to the browser; this entry
- * point does not use a {@link CookieJar}.
+ * Used by Deno, Bun, React Native, and any other runtime that provides a
+ * spec-compliant `fetch()`. These runtimes negotiate HTTP/2 automatically
+ * via ALPN, so the {@link AptosClientRequest.http2 | http2} option is
+ * ignored.
  *
- * The `credentials` mode on each request is controlled via
- * `overrides.WITH_CREDENTIALS` (`true` → `"include"`, `false` → `"omit"`,
- * default `"include"`).
- *
- * @module index.browser
+ * @module index.fetch
  */
+import { CookieJar } from "./cookieJar";
 import type { AptosClientRequest, AptosClientResponse } from "./types";
+
+const cookieJar = new CookieJar();
 
 /**
  * Send a JSON request to an Aptos API endpoint.
@@ -23,6 +22,16 @@ import type { AptosClientRequest, AptosClientResponse } from "./types";
  * @typeParam Res - Expected shape of the JSON response body.
  * @param options - Request configuration.
  * @returns Parsed response with status, headers, and deserialized body.
+ *
+ * @example
+ * ```ts
+ * import aptosClient from "@aptos-labs/aptos-client";
+ *
+ * const { data } = await aptosClient<{ chain_id: number }>({
+ *   url: "https://fullnode.mainnet.aptoslabs.com/v1",
+ *   method: "GET",
+ * });
+ * ```
  */
 export default async function aptosClient<Res>(options: AptosClientRequest): Promise<AptosClientResponse<Res>> {
   return jsonRequest<Res>(options);
@@ -40,6 +49,7 @@ export async function jsonRequest<Res>(options: AptosClientRequest): Promise<Apt
   const { requestUrl, requestConfig } = buildRequest(options);
 
   const res = await fetch(requestUrl, requestConfig);
+  handleSetCookieHeaders(res, requestUrl);
   const data = await res.json();
 
   return {
@@ -63,6 +73,7 @@ export async function bcsRequest(options: AptosClientRequest): Promise<AptosClie
   const { requestUrl, requestConfig } = buildRequest(options);
 
   const res = await fetch(requestUrl, requestConfig);
+  handleSetCookieHeaders(res, requestUrl);
   const data = await res.arrayBuffer();
 
   return {
@@ -77,37 +88,50 @@ export async function bcsRequest(options: AptosClientRequest): Promise<AptosClie
 /** Build the URL and `RequestInit` from the caller's options. @internal */
 function buildRequest(options: AptosClientRequest) {
   const headers = new Headers();
-  Object.entries(options?.headers ?? {}).forEach(([key, value]) => {
+  for (const [key, value] of Object.entries(options?.headers ?? {})) {
     headers.append(key, String(value));
-  });
-
-  const body = options.body instanceof Uint8Array ? (options.body.buffer as ArrayBuffer) : JSON.stringify(options.body);
-
-  const withCredentialsOption = options.overrides?.WITH_CREDENTIALS;
-  let credentials: RequestCredentials;
-  if (withCredentialsOption === false) {
-    credentials = "omit";
-  } else if (withCredentialsOption === true) {
-    credentials = "include";
-  } else {
-    credentials = withCredentialsOption ?? "include";
   }
+
+  // Inject cookies from the jar
+  const url = new URL(options.url);
+  const cookies = cookieJar.getCookies(url);
+  if (cookies.length > 0) {
+    headers.set("cookie", cookies.map((c) => `${c.name}=${c.value}`).join("; "));
+  }
+
+  const body =
+    options.body instanceof Uint8Array
+      ? (options.body.buffer as ArrayBuffer)
+      : options.body
+        ? JSON.stringify(options.body)
+        : undefined;
 
   const requestConfig: RequestInit = {
     method: options.method,
     headers,
     body,
-    credentials,
   };
 
   const params = new URLSearchParams();
-  Object.entries(options.params ?? {}).forEach(([key, value]) => {
+  for (const [key, value] of Object.entries(options.params ?? {})) {
     if (value !== undefined) {
       params.append(key, String(value));
     }
-  });
+  }
 
   const requestUrl = options.url + (params.size > 0 ? `?${params.toString()}` : "");
 
   return { requestUrl, requestConfig };
+}
+
+/** Store any `Set-Cookie` headers from the response in the cookie jar. @internal */
+function handleSetCookieHeaders(res: Response, requestUrl: string) {
+  // getSetCookie() is supported in Deno 1.33+, Bun 1.0+, Node 20+
+  const setCookies = res.headers.getSetCookie?.();
+  if (setCookies && setCookies.length > 0) {
+    const url = new URL(requestUrl);
+    for (const c of setCookies) {
+      cookieJar.setCookie(url, c);
+    }
+  }
 }

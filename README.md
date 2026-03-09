@@ -6,26 +6,78 @@
 
 # @aptos-labs/aptos-client
 
-This package implements a client with which you can interact with the Aptos network. It can be used standalone, and it is the client package used by the Aptos TypeScript SDK.
+HTTP client for the Aptos network API. Works standalone or as the transport layer for the [Aptos TypeScript SDK](https://github.com/aptos-labs/aptos-ts-sdk).
 
-#### Implementation
+## Features
 
-The `@aptos-labs/aptos-client` package supports http2 protocol and implements 2 clients environment based:
+- **HTTP/2** — enabled by default on all platforms
+- **Multi-runtime** — Node.js, Deno, Bun, browsers, and React Native
+- **Cookie jar** — automatic cookie handling in Node, Deno, and Bun
+- **BCS support** — `bcsRequest()` returns raw `ArrayBuffer` for binary-encoded responses
 
-1. [fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) - implemented in `index.browser.ts` to use in `browser` environment (in a browser env it is up to the browser and the server to negotiate http2 connection)
-2. [got](https://github.com/sindresorhus/got) - implemented in `index.node.ts` to use in `node` environment (to support http2 in node environment, still the server must support http2 also)
+## Installation
 
-#### Function signature
-
-```ts
-async function aptosClient<Res>(
-  requestOptions: AptosClientRequest,
-): Promise<AptosClientResponse<Res>>;
+```bash
+npm install @aptos-labs/aptos-client
+# or
+pnpm add @aptos-labs/aptos-client
 ```
 
-#### Types
+`undici` is an optional peer dependency — only needed in Node.js:
+
+```bash
+npm install undici
+```
+
+## Usage
 
 ```ts
+import aptosClient from "@aptos-labs/aptos-client";
+
+const { status, data } = await aptosClient<{ chain_id: number }>({
+  url: "https://fullnode.mainnet.aptoslabs.com/v1",
+  method: "GET",
+});
+```
+
+### Named exports
+
+```ts
+import { jsonRequest, bcsRequest } from "@aptos-labs/aptos-client";
+
+// JSON (same as default export)
+const json = await jsonRequest<MyType>({ url, method: "GET" });
+
+// BCS (returns ArrayBuffer)
+const bcs = await bcsRequest({ url, method: "GET" });
+```
+
+## Runtime Resolution
+
+The package uses [conditional exports](https://nodejs.org/api/packages.html#conditional-exports) to select the right implementation for each runtime:
+
+| Condition | Entry point | HTTP/2 | Notes |
+|---|---|---|---|
+| `node` | `index.node.ts` | Configurable via `http2` option (default `true`) | Uses [undici](https://undici.nodejs.org) `Agent({ allowH2 })` |
+| `browser` | `index.browser.ts` | Automatic (browser engine) | Delegates cookies to the browser |
+| `react-native` | `index.fetch.ts` | Automatic (OkHttp / NSURLSession) | Platform negotiates HTTP/2 via ALPN |
+| `deno` | `index.fetch.ts` | Automatic | — |
+| `bun` | `index.fetch.ts` | Automatic | — |
+| `default` | `index.fetch.ts` | Depends on runtime | Fallback for unknown runtimes |
+
+## Types
+
+```ts
+type AptosClientRequest = {
+  url: string;
+  method: "GET" | "POST";
+  body?: any;
+  params?: any;
+  headers?: any;
+  overrides?: any;
+  http2?: boolean; // Node only — ignored elsewhere
+};
+
 type AptosClientResponse<Res> = {
   status: number;
   statusText: string;
@@ -35,32 +87,16 @@ type AptosClientResponse<Res> = {
   response?: any;
   headers?: any;
 };
-
-type AptosClientRequest = {
-  url: string;
-  method: "GET" | "POST";
-  body?: any;
-  params?: any;
-  headers?: any;
-  overrides?: any;
-};
 ```
 
-#### Usage
+## HTTP/2
 
-```ts
-import aptosClient from "@aptos-labs/aptos-client";
-
-const response = await aptosClient<Res>({
-  url,
-  method,
-  body,
-  params,
-  headers,
-  overrides,
-});
-return response;
-```
+| Runtime | How it works |
+|---|---|
+| **Node.js** | undici negotiates HTTP/2 via ALPN when `http2: true` (the default). Set `http2: false` to force HTTP/1.1. |
+| **Browser** | The browser engine negotiates HTTP/2 with the server automatically. The `http2` option is ignored. |
+| **React Native** | OkHttp (Android) and NSURLSession (iOS) negotiate HTTP/2 via ALPN automatically. The `http2` option is ignored. |
+| **Deno / Bun** | The runtime negotiates HTTP/2 automatically. The `http2` option is ignored. |
 
 #### Releasing a new version
 
