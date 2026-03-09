@@ -17,6 +17,7 @@ const cookieJar = new CookieJar();
 
 /** One dispatcher per origin + HTTP/2 mode for connection reuse. */
 const dispatcherCache = new Map<string, Agent>();
+const MAX_DISPATCHERS = 50;
 
 /**
  * Send a JSON request to an Aptos API endpoint.
@@ -126,7 +127,19 @@ async function doRequest<Res>(
 function getDispatcher(origin: string, http2: boolean): Agent {
   const key = `${origin}|h2=${http2}`;
   const cached = dispatcherCache.get(key);
-  if (cached) return cached;
+  if (cached) {
+    // Move to end of Map (most-recently-used)
+    dispatcherCache.delete(key);
+    dispatcherCache.set(key, cached);
+    return cached;
+  }
+
+  // Evict oldest entry if cache is full
+  if (dispatcherCache.size >= MAX_DISPATCHERS) {
+    const oldest = dispatcherCache.keys().next().value!;
+    dispatcherCache.get(oldest)!.destroy();
+    dispatcherCache.delete(oldest);
+  }
 
   const agent = new Agent({
     allowH2: http2,
@@ -141,7 +154,7 @@ function getDispatcher(origin: string, http2: boolean): Agent {
  * `bigint` values in `params` are converted to strings automatically.
  * @internal
  */
-function buildUrl(url: string, params?: Record<string, any>): URL {
+function buildUrl(url: string, params?: AptosClientRequest["params"]): URL {
   const requestUrl = new URL(url);
 
   Object.entries(convertBigIntToString(params)).forEach(([key, value]) => {
@@ -157,7 +170,7 @@ function buildUrl(url: string, params?: Record<string, any>): URL {
  * Merge caller-supplied headers with cookies from the jar.
  * @internal
  */
-function buildHeaders(url: URL, headers?: Record<string, any>): Headers {
+function buildHeaders(url: URL, headers?: AptosClientRequest["headers"]): Headers {
   const result = new Headers();
 
   Object.entries(headers ?? {}).forEach(([key, value]) => {
@@ -179,7 +192,7 @@ function buildHeaders(url: URL, headers?: Record<string, any>): Headers {
  * `Uint8Array` is unwrapped to its backing `ArrayBuffer`; everything else is JSON-stringified.
  * @internal
  */
-function serializeBody(body: any): BodyInit {
+function serializeBody(body: Record<string, unknown> | Uint8Array): BodyInit {
   if (body instanceof Uint8Array) {
     return body.buffer as ArrayBuffer;
   }
@@ -211,41 +224,19 @@ async function parseJsonSafely(res: Response): Promise<any> {
 
 /** Store any `Set-Cookie` headers from the response in the cookie jar. @internal */
 function applySetCookieHeaders(url: URL, headers: Headers): void {
-  const setCookies = getSetCookieValues(headers);
-  for (const cookie of setCookies) {
+  for (const cookie of headers.getSetCookie()) {
     cookieJar.setCookie(url, cookie);
   }
-}
-
-/**
- * Extract `Set-Cookie` values from response headers.
- * Prefers the non-standard `getSetCookie()` method (Node 20+/undici), falling
- * back to the single collapsed `set-cookie` header.
- * @internal
- */
-function getSetCookieValues(headers: Headers): string[] {
-  // Node/Undici exposes non-standard headers.getSetCookie() in modern runtimes.
-  const maybeGetSetCookie = (
-    headers as Headers & {
-      getSetCookie?: () => string[];
-    }
-  ).getSetCookie;
-
-  if (typeof maybeGetSetCookie === "function") {
-    return maybeGetSetCookie.call(headers);
-  }
-
-  // Fallback for environments that collapse to a single header string.
-  const single = headers.get("set-cookie");
-  return single ? [single] : [];
 }
 
 /**
  * Convert `bigint` values to strings so they can be passed to `URLSearchParams`.
  * @internal
  */
-function convertBigIntToString(obj: any): any {
-  const result: any = {};
+function convertBigIntToString(
+  obj: AptosClientRequest["params"],
+): Record<string, string | number | boolean | undefined> {
+  const result: Record<string, string | number | boolean | undefined> = {};
   if (!obj) return result;
 
   Object.entries(obj).forEach(([key, value]) => {

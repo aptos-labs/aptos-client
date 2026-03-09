@@ -57,13 +57,9 @@ export class CookieJar {
    *
    * @param str - Raw `Set-Cookie` header value.
    * @returns Parsed cookie.
-   * @throws If `str` is not a string or the cookie is malformed.
+   * @throws If the cookie is malformed.
    */
   static parse(str: string): Cookie {
-    if (typeof str !== "string") {
-      throw new Error("argument str must be a string");
-    }
-
     const parts = str.split(";").map((part) => part.trim());
 
     let cookie: Cookie;

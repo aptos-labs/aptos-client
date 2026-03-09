@@ -24,6 +24,8 @@ jobs:
 
       - run: pnpm build
 
+      - run: pnpm test
+
   sdk-compat:
     runs-on: ubuntu-latest
     steps:

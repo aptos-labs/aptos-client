@@ -31,11 +31,11 @@ export type AptosClientRequest = {
   /** HTTP method — only `GET` and `POST` are supported. */
   method: "GET" | "POST";
   /** Request body. Objects are JSON-serialized; `Uint8Array` is sent as binary. */
-  body?: any;
+  body?: Record<string, unknown> | Uint8Array;
   /** Query-string parameters appended to the URL. `bigint` values are stringified automatically. */
-  params?: any;
+  params?: Record<string, string | number | bigint | boolean | undefined>;
   /** Additional HTTP headers merged into the request. */
-  headers?: any;
+  headers?: Record<string, string | undefined>;
   /**
    * Runtime-specific overrides.
    *
@@ -44,7 +44,7 @@ export type AptosClientRequest = {
    * `credentials` option on the `fetch` call (`true` → `"include"`,
    * `false` → `"omit"`).
    */
-  overrides?: any;
+  overrides?: { WITH_CREDENTIALS?: boolean | RequestCredentials };
   /**
    * Enable or disable HTTP/2 negotiation.
    *

@@ -42,14 +42,14 @@
   },
   "main": "./dist/node/index.node.js",
   "module": "./dist/node/index.node.mjs",
-  "types": "./dist/types/index.node.d.ts",
+  "sideEffects": false,
+  "types": "./dist/node/index.node.d.ts",
   "files": [
     "./dist/"
   ],
   "scripts": {
     "build:clean": "rm -rf dist",
-    "build": "pnpm build:clean && pnpm run _build:types && tsup",
-    "_build:types": "tsc src/types.ts src/index.node.ts --outDir dist/types --declaration",
+    "build": "pnpm build:clean && tsup",
     "test": "tsx --test test/node.test.ts test/fetch.test.ts test/browser.test.ts",
     "test:node": "tsx --test test/node.test.ts",
     "test:fetch": "tsx --test test/fetch.test.ts",
