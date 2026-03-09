@@ -95,7 +95,9 @@ async function parseJsonSafely(res: Response, url: string): Promise<any> {
 function buildRequest(options: AptosClientRequest) {
   const headers = new Headers();
   Object.entries(options?.headers ?? {}).forEach(([key, value]) => {
-    headers.append(key, String(value));
+    if (value !== undefined) {
+      headers.append(key, String(value));
+    }
   });
 
   const body =
@@ -125,14 +127,12 @@ function buildRequest(options: AptosClientRequest) {
     credentials,
   };
 
-  const params = new URLSearchParams();
+  const requestUrl = new URL(options.url);
   Object.entries(options.params ?? {}).forEach(([key, value]) => {
     if (value !== undefined) {
-      params.append(key, String(value));
+      requestUrl.searchParams.append(key, String(value));
     }
   });
 
-  const requestUrl = options.url + (params.size > 0 ? `?${params.toString()}` : "");
-
-  return { requestUrl, requestConfig };
+  return { requestUrl: requestUrl.toString(), requestConfig };
 }

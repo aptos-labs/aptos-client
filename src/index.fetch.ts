@@ -89,7 +89,9 @@ export async function bcsRequest(options: AptosClientRequest): Promise<AptosClie
 function buildRequest(options: AptosClientRequest) {
   const headers = new Headers();
   for (const [key, value] of Object.entries(options?.headers ?? {})) {
-    headers.append(key, String(value));
+    if (value !== undefined) {
+      headers.append(key, String(value));
+    }
   }
 
   // Inject cookies from the jar
@@ -115,16 +117,14 @@ function buildRequest(options: AptosClientRequest) {
     body,
   };
 
-  const params = new URLSearchParams();
+  const requestUrl = new URL(options.url);
   for (const [key, value] of Object.entries(options.params ?? {})) {
     if (value !== undefined) {
-      params.append(key, String(value));
+      requestUrl.searchParams.append(key, String(value));
     }
   }
 
-  const requestUrl = options.url + (params.size > 0 ? `?${params.toString()}` : "");
-
-  return { requestUrl, requestConfig };
+  return { requestUrl: requestUrl.toString(), requestConfig };
 }
 
 /** Parse JSON safely, returning `null` for empty or no-content responses. @internal */

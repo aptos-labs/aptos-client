@@ -27,12 +27,18 @@ export class CookieJar {
    * @param cookieStr - Raw `Set-Cookie` header string.
    */
   setCookie(url: URL, cookieStr: string) {
+    let cookie: Cookie;
+    try {
+      cookie = CookieJar.parse(cookieStr);
+    } catch {
+      return; // Silently skip malformed cookies, matching browser behavior
+    }
+
     const key = url.origin.toLowerCase();
     if (!this.jar.has(key)) {
       this.jar.set(key, []);
     }
 
-    const cookie = CookieJar.parse(cookieStr);
     this.jar.set(key, [...(this.jar.get(key)?.filter((c) => c.name !== cookie.name) || []), cookie]);
   }
 
@@ -48,8 +54,14 @@ export class CookieJar {
       return [];
     }
 
-    // Filter out expired cookies
-    return this.jar.get(key)?.filter((cookie) => !cookie.expires || cookie.expires > new Date()) || [];
+    const isSecure = url.protocol === "https:";
+    return (
+      this.jar.get(key)?.filter((cookie) => {
+        if (cookie.expires && cookie.expires <= new Date()) return false;
+        if (cookie.secure && !isSecure) return false;
+        return true;
+      }) || []
+    );
   }
 
   /**
@@ -94,16 +106,19 @@ export class CookieJar {
       const nameLow = name.toLowerCase();
       const val = value?.charAt(0) === "'" || value?.charAt(0) === '"' ? value?.slice(1, -1) : value;
       if (nameLow === "expires") {
-        cookie.expires = new Date(val);
+        const date = new Date(val);
+        if (!Number.isNaN(date.getTime())) {
+          cookie.expires = date;
+        }
       }
       if (nameLow === "path") {
         cookie.path = val;
       }
       if (nameLow === "samesite") {
-        if (val !== "Lax" && val !== "None" && val !== "Strict") {
-          throw new Error("Invalid cookie SameSite value");
-        }
-        cookie.sameSite = val;
+        const normalized = val?.toLowerCase();
+        if (normalized === "lax") cookie.sameSite = "Lax";
+        else if (normalized === "none") cookie.sameSite = "None";
+        else if (normalized === "strict") cookie.sameSite = "Strict";
       }
       if (nameLow === "secure") {
         cookie.secure = true;

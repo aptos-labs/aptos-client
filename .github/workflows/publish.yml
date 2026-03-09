@@ -42,7 +42,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - run: pnpm check
+
       - run: pnpm build
+
+      - run: pnpm test
 
       - run: npm install -g npm@latest
 
