@@ -71,11 +71,12 @@ The package uses [conditional exports](https://nodejs.org/api/packages.html#cond
 type AptosClientRequest = {
   url: string;
   method: "GET" | "POST";
-  body?: any;
-  params?: any;
-  headers?: any;
-  overrides?: any;
-  http2?: boolean; // Node only — ignored elsewhere
+  body?: unknown;
+  params?: Record<string, string | number | bigint | boolean | undefined>;
+  headers?: Record<string, string | undefined>;
+  overrides?: { WITH_CREDENTIALS?: boolean };
+  http2?: boolean;    // Node only — ignored elsewhere
+  cookieJar?: CookieJarLike; // Per-request cookie isolation (Node & fetch only)
 };
 
 type AptosClientResponse<Res> = {
@@ -88,6 +89,8 @@ type AptosClientResponse<Res> = {
   headers?: any;
 };
 ```
+
+> See [`src/types.ts`](./src/types.ts) for the full type definitions with documentation.
 
 ## HTTP/2
 

@@ -181,7 +181,7 @@ export class CookieJar {
   }
 }
 
-/** RFC 7230 token: `[!#$%&'*+\-.^_`|~0-9A-Za-z]+`. Covers CTL, space, and separators. @internal */
+/** RFC 7230 token — rejects CTL, space, and separator characters. @internal */
 const TOKEN_RE = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
 function isValidTokenName(name: string): boolean {
   return TOKEN_RE.test(name);

@@ -20,7 +20,7 @@ adheres to the format set out by [Keep a Changelog](https://keepachangelog.com/e
 - **`react-native` export condition** — React Native is now an explicit export target. It resolves to `index.fetch.ts`; HTTP/2 is negotiated automatically by the platform (OkHttp on Android, NSURLSession on iOS).
 - **Cookie jar** — Built-in `CookieJar` for Node.js and fetch entry points. Browsers delegate cookie handling to the browser engine.
 - **`bcsRequest()` named export** — For binary (BCS) responses returning `ArrayBuffer`.
-- **TypeDoc documentation** — All public APIs and types now have TSDoc comments.
+- **TSDoc documentation** — All public APIs and types now have TSDoc comments.
 
 ### Fixed
 
