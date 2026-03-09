@@ -77,15 +77,19 @@ jobs:
 
   sdk-compat:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
           path: aptos-client
+          persist-credentials: false
 
       - uses: actions/checkout@v4
         with:
           repository: aptos-labs/aptos-ts-sdk
           path: aptos-ts-sdk
+          persist-credentials: false
 
       - uses: pnpm/action-setup@v4
         with:

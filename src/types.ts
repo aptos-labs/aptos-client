@@ -13,12 +13,16 @@ export type AptosClientResponse<Res> = {
   /** Parsed response body. */
   data: Res;
   /** The `RequestInit` (or undici equivalent) that was sent. */
+  // biome-ignore lint/suspicious/noExplicitAny: cross-platform response type; varies per entry point
   config?: any;
   /** Metadata about the outgoing request (Node entry point only). */
+  // biome-ignore lint/suspicious/noExplicitAny: cross-platform response type; varies per entry point
   request?: any;
   /** The raw `Response` object (Node entry point only). */
+  // biome-ignore lint/suspicious/noExplicitAny: cross-platform response type; varies per entry point
   response?: any;
   /** Response headers. */
+  // biome-ignore lint/suspicious/noExplicitAny: cross-platform response type; varies per entry point
   headers?: any;
 };
 

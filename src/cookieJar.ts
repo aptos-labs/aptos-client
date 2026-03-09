@@ -24,6 +24,8 @@ interface Cookie {
  */
 export class CookieJar {
   static readonly MAX_COOKIES_PER_ORIGIN = 50;
+  /** RFC 6265 §6.1 recommends at least 4096 bytes per cookie. */
+  static readonly MAX_COOKIE_SIZE = 8192;
 
   constructor(private jar = new Map<string, Cookie[]>()) {}
 
@@ -34,6 +36,10 @@ export class CookieJar {
    * @param cookieStr - Raw `Set-Cookie` header string.
    */
   setCookie(url: URL, cookieStr: string) {
+    if (cookieStr.length > CookieJar.MAX_COOKIE_SIZE) {
+      return; // Silently drop oversized cookies
+    }
+
     let cookie: Cookie;
     try {
       cookie = CookieJar.parse(cookieStr);
@@ -116,9 +122,13 @@ export class CookieJar {
       const name = parts[0].slice(0, eqIdx);
       const value = parts[0].slice(eqIdx + 1);
 
-      // Reject control characters that could enable header injection (CRLF, null)
-      if (hasControlChars(name) || hasControlChars(value)) {
-        throw new Error("Invalid cookie: name or value contains control characters");
+      // RFC 6265 §4.1.1: cookie-name must be a valid RFC 7230 token
+      if (!isValidTokenName(name)) {
+        throw new Error("Invalid cookie: name contains invalid characters");
+      }
+      // Reject control characters in value that could enable header injection
+      if (hasControlChars(value)) {
+        throw new Error("Invalid cookie: value contains control characters");
       }
 
       cookie = {
@@ -169,6 +179,12 @@ export class CookieJar {
 
     return cookie;
   }
+}
+
+/** RFC 7230 token: `[!#$%&'*+\-.^_`|~0-9A-Za-z]+`. Covers CTL, space, and separators. @internal */
+const TOKEN_RE = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
+function isValidTokenName(name: string): boolean {
+  return TOKEN_RE.test(name);
 }
 
 /** Check if a string contains CTL characters per RFC 6265 (0x00-0x1F and 0x7F). @internal */

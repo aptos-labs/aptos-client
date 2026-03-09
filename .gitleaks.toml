@@ -1,0 +1,5 @@
+[allowlist]
+  description = "Allowlisted test-only credentials"
+  paths = [
+    '''test/server\.ts''',
+  ]

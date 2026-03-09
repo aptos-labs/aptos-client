@@ -149,6 +149,7 @@ function buildRequest(options: AptosClientRequest) {
 }
 
 /** Parse JSON safely, returning `null` for empty or no-content responses. @internal */
+// biome-ignore lint/suspicious/noExplicitAny: JSON.parse returns unknown shape; caller provides Res generic
 async function parseJsonSafely(res: Response, url: string): Promise<any> {
   if (res.status === 204 || res.status === 205) {
     return null;

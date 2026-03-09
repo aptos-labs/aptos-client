@@ -61,39 +61,51 @@ describe("CookieJar.parse", () => {
   });
 });
 
-describe("CookieJar — CTL character rejection (RFC 6265)", () => {
+describe("CookieJar — cookie name token validation (RFC 6265/7230)", () => {
   it("rejects NUL (0x00) in cookie name", () => {
-    assert.throws(() => CookieJar.parse("fo\x00o=bar"), /control characters/);
-  });
-
-  it("rejects NUL (0x00) in cookie value", () => {
-    assert.throws(() => CookieJar.parse("foo=ba\x00r"), /control characters/);
+    assert.throws(() => CookieJar.parse("fo\x00o=bar"), /invalid characters/);
   });
 
   it("rejects CR (0x0D) in cookie name", () => {
-    assert.throws(() => CookieJar.parse("fo\ro=bar"), /control characters/);
+    assert.throws(() => CookieJar.parse("fo\ro=bar"), /invalid characters/);
+  });
+
+  it("rejects TAB (0x09) in cookie name", () => {
+    assert.throws(() => CookieJar.parse("fo\to=bar"), /invalid characters/);
+  });
+
+  it("rejects DEL (0x7F) in cookie name", () => {
+    assert.throws(() => CookieJar.parse("fo\x7Fo=bar"), /invalid characters/);
+  });
+
+  it("rejects space in cookie name", () => {
+    assert.throws(() => CookieJar.parse("foo bar=baz"), /invalid characters/);
+  });
+
+  it("rejects separator characters in cookie name", () => {
+    assert.throws(() => CookieJar.parse("foo(bar)=baz"), /invalid characters/);
+    assert.throws(() => CookieJar.parse("foo@bar=baz"), /invalid characters/);
+    assert.throws(() => CookieJar.parse("foo,bar=baz"), /invalid characters/);
+  });
+
+  it("setCookie silently skips cookies with invalid name characters", () => {
+    const jar = new CookieJar();
+    jar.setCookie(url, "fo\x00o=bar");
+    assert.deepEqual(jar.getCookies(url), []);
+  });
+});
+
+describe("CookieJar — cookie value CTL rejection (RFC 6265)", () => {
+  it("rejects NUL (0x00) in cookie value", () => {
+    assert.throws(() => CookieJar.parse("foo=ba\x00r"), /control characters/);
   });
 
   it("rejects LF (0x0A) in cookie value", () => {
     assert.throws(() => CookieJar.parse("foo=ba\nr"), /control characters/);
   });
 
-  it("rejects TAB (0x09) in cookie name", () => {
-    assert.throws(() => CookieJar.parse("fo\to=bar"), /control characters/);
-  });
-
-  it("rejects DEL (0x7F) in cookie name", () => {
-    assert.throws(() => CookieJar.parse("fo\x7Fo=bar"), /control characters/);
-  });
-
   it("rejects BEL (0x07) in cookie value", () => {
     assert.throws(() => CookieJar.parse("foo=ba\x07r"), /control characters/);
-  });
-
-  it("setCookie silently skips cookies with control characters", () => {
-    const jar = new CookieJar();
-    jar.setCookie(url, "fo\x00o=bar");
-    assert.deepEqual(jar.getCookies(url), []);
   });
 });
 
@@ -160,6 +172,22 @@ describe("CookieJar — per-origin cap", () => {
     assert.equal(cookies.length, CookieJar.MAX_COOKIES_PER_ORIGIN);
     // The oldest cookies should have been evicted
     assert.equal(cookies[0].name, "cookie10");
+  });
+});
+
+describe("CookieJar — cookie size limit", () => {
+  it("silently drops oversized cookies", () => {
+    const jar = new CookieJar();
+    const huge = `big=${"x".repeat(CookieJar.MAX_COOKIE_SIZE + 1)}`;
+    jar.setCookie(url, huge);
+    assert.deepEqual(jar.getCookies(url), []);
+  });
+
+  it("accepts cookies within size limit", () => {
+    const jar = new CookieJar();
+    const ok = `ok=${"x".repeat(100)}`;
+    jar.setCookie(url, ok);
+    assert.equal(jar.getCookies(url).length, 1);
   });
 });
 
