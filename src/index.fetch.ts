@@ -13,6 +13,7 @@ import { CookieJar } from "./cookieJar";
 import type { AptosClientRequest, AptosClientResponse, CookieJarLike } from "./types";
 
 export { CookieJar } from "./cookieJar";
+export type { CookieJarLike } from "./types";
 
 const defaultCookieJar = new CookieJar();
 
@@ -133,6 +134,10 @@ function buildRequest(options: AptosClientRequest) {
       : options.body
         ? JSON.stringify(options.body)
         : undefined;
+
+  if (options.body && !(options.body instanceof Uint8Array) && !headers.has("content-type")) {
+    headers.set("content-type", "application/json");
+  }
 
   const requestConfig: RequestInit = {
     method: options.method,

@@ -23,6 +23,8 @@ interface Cookie {
  * to avoid cross-request cookie leakage.
  */
 export class CookieJar {
+  static readonly MAX_COOKIES_PER_ORIGIN = 50;
+
   constructor(private jar = new Map<string, Cookie[]>()) {}
 
   /**
@@ -49,7 +51,12 @@ export class CookieJar {
       this.jar.set(key, []);
     }
 
-    this.jar.set(key, [...(this.jar.get(key)?.filter((c) => c.name !== cookie.name) || []), cookie]);
+    const existing = this.jar.get(key)?.filter((c) => c.name !== cookie.name) || [];
+    // Evict oldest cookies if we're at the per-origin cap
+    while (existing.length >= CookieJar.MAX_COOKIES_PER_ORIGIN) {
+      existing.shift();
+    }
+    this.jar.set(key, [...existing, cookie]);
   }
 
   /**
@@ -60,18 +67,28 @@ export class CookieJar {
    */
   getCookies(url: URL): Cookie[] {
     const key = url.origin.toLowerCase();
-    if (!this.jar.get(key)) {
+    const cookies = this.jar.get(key);
+    if (!cookies) {
       return [];
     }
 
+    const now = new Date();
     const isSecure = url.protocol === "https:";
-    return (
-      this.jar.get(key)?.filter((cookie) => {
-        if (cookie.expires && cookie.expires <= new Date()) return false;
-        if (cookie.secure && !isSecure) return false;
-        return true;
-      }) || []
-    );
+    const live = cookies.filter((cookie) => {
+      if (cookie.expires && cookie.expires <= now) return false;
+      return true;
+    });
+
+    // Write back to evict expired cookies from storage
+    if (live.length !== cookies.length) {
+      if (live.length === 0) {
+        this.jar.delete(key);
+      } else {
+        this.jar.set(key, live);
+      }
+    }
+
+    return isSecure ? live : live.filter((cookie) => !cookie.secure);
   }
 
   /** Remove all stored cookies. Useful for test isolation. */
@@ -154,11 +171,11 @@ export class CookieJar {
   }
 }
 
-/** Check if a string contains CR, LF, or null characters. @internal */
+/** Check if a string contains CTL characters per RFC 6265 (0x00-0x1F and 0x7F). @internal */
 function hasControlChars(str: string): boolean {
   for (let i = 0; i < str.length; i++) {
     const code = str.charCodeAt(i);
-    if (code === 0x0d || code === 0x0a || code === 0x00) return true;
+    if (code <= 0x1f || code === 0x7f) return true;
   }
   return false;
 }

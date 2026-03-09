@@ -121,6 +121,10 @@ function buildRequest(options: AptosClientRequest) {
         ? JSON.stringify(options.body)
         : undefined;
 
+  if (options.body && !(options.body instanceof Uint8Array) && !headers.has("content-type")) {
+    headers.set("content-type", "application/json");
+  }
+
   const credentials: RequestCredentials = options.overrides?.WITH_CREDENTIALS === false ? "omit" : "include";
 
   const requestConfig: RequestInit = {

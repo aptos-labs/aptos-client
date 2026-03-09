@@ -14,6 +14,7 @@ import { CookieJar } from "./cookieJar";
 import type { AptosClientRequest, AptosClientResponse, CookieJarLike } from "./types";
 
 export { CookieJar } from "./cookieJar";
+export type { CookieJarLike } from "./types";
 
 const defaultCookieJar = new CookieJar();
 
@@ -98,6 +99,9 @@ async function doRequest<Res>(
 
   if (body !== undefined) {
     init.body = serializeBody(body);
+    if (!(body instanceof Uint8Array) && !requestHeaders.has("content-type")) {
+      requestHeaders.set("content-type", "application/json");
+    }
   }
 
   const res = await fetch(requestUrl, init);
