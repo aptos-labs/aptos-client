@@ -11,6 +11,14 @@
  */
 import { Agent } from "undici";
 import { CookieJar } from "./cookieJar";
+import {
+  applyCookiesToHeaders,
+  applyJsonContentType,
+  buildUrl,
+  parseJsonSafely,
+  serializeBody,
+  storeResponseCookies,
+} from "./shared";
 import type { AptosClientRequest, AptosClientResponse, CookieJarLike } from "./types";
 
 export { CookieJar } from "./cookieJar";
@@ -97,16 +105,15 @@ async function doRequest<Res>(
     dispatcher,
   };
 
-  if (body !== undefined) {
-    init.body = serializeBody(body);
-    if (!(body instanceof Uint8Array) && !requestHeaders.has("content-type")) {
-      requestHeaders.set("content-type", "application/json");
-    }
+  const serialized = serializeBody(body);
+  if (serialized !== undefined) {
+    init.body = serialized;
+    applyJsonContentType(body, requestHeaders);
   }
 
   const res = await fetch(requestUrl, init);
 
-  applySetCookieHeaders(requestUrl, res.headers, jar);
+  storeResponseCookies(requestUrl, res.headers, jar);
 
   const data = mode === "json" ? await parseJsonSafely(res, requestUrl) : await res.arrayBuffer();
 
@@ -162,107 +169,19 @@ function getDispatcher(origin: string, http2: boolean): Agent {
 }
 
 /**
- * Build a `URL` from the base string and optional query parameters.
- * `bigint` values in `params` are converted to strings automatically.
- * @internal
- */
-function buildUrl(url: string, params?: AptosClientRequest["params"]): URL {
-  const requestUrl = new URL(url);
-
-  Object.entries(convertBigIntToString(params)).forEach(([key, value]) => {
-    if (value !== undefined) {
-      requestUrl.searchParams.append(key, String(value));
-    }
-  });
-
-  return requestUrl;
-}
-
-/**
  * Merge caller-supplied headers with cookies from the jar.
  * @internal
  */
 function buildHeaders(url: URL, headers: AptosClientRequest["headers"] | undefined, jar: CookieJarLike): Headers {
   const result = new Headers();
 
-  Object.entries(headers ?? {}).forEach(([key, value]) => {
+  for (const [key, value] of Object.entries(headers ?? {})) {
     if (value !== undefined) {
       result.set(key, String(value));
     }
-  });
-
-  const cookies = jar.getCookies(url);
-  if (cookies.length > 0) {
-    const jarCookies = cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ");
-    const existing = result.get("cookie");
-    result.set("cookie", existing ? `${existing}; ${jarCookies}` : jarCookies);
   }
 
-  return result;
-}
-
-/**
- * Serialize a request body to a `BodyInit`-compatible value.
- * `Uint8Array` is passed directly (it is a valid `ArrayBufferView`/`BodyInit`);
- * everything else is JSON-stringified.
- * @internal
- */
-function serializeBody(body: unknown): BodyInit {
-  if (body instanceof Uint8Array) {
-    // Uint8Array is a valid BodyInit at runtime (ArrayBufferView), cast for TS compatibility
-    return body as unknown as BodyInit;
-  }
-  return JSON.stringify(body);
-}
-
-/**
- * Parse a response body as JSON, returning `null` for empty or no-content responses.
- * @internal
- */
-// biome-ignore lint/suspicious/noExplicitAny: JSON.parse returns unknown shape; caller provides Res generic
-async function parseJsonSafely(res: Response, url: URL): Promise<any> {
-  if (res.status === 204 || res.status === 205) {
-    return null;
-  }
-
-  const text = await res.text();
-  if (text.length === 0) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    const err = new Error(`Failed to parse JSON response from ${url.pathname} (status ${res.status})`);
-    Object.defineProperty(err, "responseBody", { value: text.slice(0, 200), enumerable: false });
-    throw err;
-  }
-}
-
-/** Store any `Set-Cookie` headers from the response in the cookie jar. @internal */
-function applySetCookieHeaders(url: URL, headers: Headers, jar: CookieJarLike): void {
-  for (const cookie of headers.getSetCookie()) {
-    jar.setCookie(url, cookie);
-  }
-}
-
-/**
- * Convert `bigint` values to strings so they can be passed to `URLSearchParams`.
- * @internal
- */
-function convertBigIntToString(
-  obj: AptosClientRequest["params"],
-): Record<string, string | number | boolean | undefined> {
-  const result: Record<string, string | number | boolean | undefined> = {};
-  if (!obj) return result;
-
-  Object.entries(obj).forEach(([key, value]) => {
-    if (typeof value === "bigint") {
-      result[key] = String(value);
-    } else {
-      result[key] = value;
-    }
-  });
+  applyCookiesToHeaders(result, url, jar);
 
   return result;
 }

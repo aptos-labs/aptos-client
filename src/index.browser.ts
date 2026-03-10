@@ -13,6 +13,7 @@
  *
  * @module index.browser
  */
+import { applyJsonContentType, buildUrl, parseJsonSafely, serializeBody } from "./shared";
 import type { AptosClientRequest, AptosClientResponse } from "./types";
 
 let http2Warned = false;
@@ -76,26 +77,6 @@ export async function bcsRequest(options: AptosClientRequest): Promise<AptosClie
   };
 }
 
-/** Parse JSON safely, returning `null` for empty or no-content responses. @internal */
-// biome-ignore lint/suspicious/noExplicitAny: JSON.parse returns unknown shape; caller provides Res generic
-async function parseJsonSafely(res: Response, url: string): Promise<any> {
-  if (res.status === 204 || res.status === 205) {
-    return null;
-  }
-  const text = await res.text();
-  if (text.length === 0) {
-    return null;
-  }
-  try {
-    return JSON.parse(text);
-  } catch {
-    const pathname = new URL(url).pathname;
-    const err = new Error(`Failed to parse JSON response from ${pathname} (status ${res.status})`);
-    Object.defineProperty(err, "responseBody", { value: text.slice(0, 200), enumerable: false });
-    throw err;
-  }
-}
-
 /** Build the URL and `RequestInit` from the caller's options. @internal */
 function buildRequest(options: AptosClientRequest) {
   if (options.method !== "GET" && options.method !== "POST") {
@@ -108,22 +89,15 @@ function buildRequest(options: AptosClientRequest) {
   }
 
   const headers = new Headers();
-  Object.entries(options?.headers ?? {}).forEach(([key, value]) => {
+  for (const [key, value] of Object.entries(options?.headers ?? {})) {
     if (value !== undefined) {
       headers.set(key, String(value));
     }
-  });
+  }
 
-  // Uint8Array is a valid BodyInit at runtime (ArrayBufferView) — no copy needed
-  const body: BodyInit | undefined =
-    options.body instanceof Uint8Array
-      ? (options.body as unknown as BodyInit)
-      : options.body
-        ? JSON.stringify(options.body)
-        : undefined;
-
-  if (options.body && !(options.body instanceof Uint8Array) && !headers.has("content-type")) {
-    headers.set("content-type", "application/json");
+  const body = serializeBody(options.body);
+  if (body !== undefined) {
+    applyJsonContentType(options.body, headers);
   }
 
   const credentials: RequestCredentials = options.overrides?.WITH_CREDENTIALS === false ? "omit" : "include";
@@ -135,13 +109,7 @@ function buildRequest(options: AptosClientRequest) {
     credentials,
   };
 
-  const requestUrl = new URL(options.url);
-  Object.entries(options.params ?? {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      // String(value) correctly handles bigint: String(12345n) === "12345"
-      requestUrl.searchParams.append(key, String(value));
-    }
-  });
+  const requestUrl = buildUrl(options.url, options.params);
 
   return { requestUrl: requestUrl.toString(), requestConfig };
 }

@@ -10,7 +10,15 @@
  * @module index.fetch
  */
 import { CookieJar } from "./cookieJar";
-import type { AptosClientRequest, AptosClientResponse, CookieJarLike } from "./types";
+import {
+  applyCookiesToHeaders,
+  applyJsonContentType,
+  buildUrl,
+  parseJsonSafely,
+  serializeBody,
+  storeResponseCookies,
+} from "./shared";
+import type { AptosClientRequest, AptosClientResponse } from "./types";
 
 export { CookieJar } from "./cookieJar";
 export type { CookieJarLike } from "./types";
@@ -54,7 +62,7 @@ export async function jsonRequest<Res>(options: AptosClientRequest): Promise<Apt
   const { requestUrl, requestConfig, jar } = buildRequest(options);
 
   const res = await fetch(requestUrl, requestConfig);
-  handleSetCookieHeaders(res, requestUrl, jar);
+  storeResponseCookies(new URL(requestUrl), res.headers, jar);
   const data = await parseJsonSafely(res, requestUrl);
 
   return {
@@ -78,7 +86,7 @@ export async function bcsRequest(options: AptosClientRequest): Promise<AptosClie
   const { requestUrl, requestConfig, jar } = buildRequest(options);
 
   const res = await fetch(requestUrl, requestConfig);
-  handleSetCookieHeaders(res, requestUrl, jar);
+  storeResponseCookies(new URL(requestUrl), res.headers, jar);
   const data = await res.arrayBuffer();
 
   return {
@@ -110,33 +118,13 @@ function buildRequest(options: AptosClientRequest) {
     }
   }
 
-  // Build URL once — used for cookie lookup and query params
-  const requestUrl = new URL(options.url);
-  for (const [key, value] of Object.entries(options.params ?? {})) {
-    if (value !== undefined) {
-      // String(value) correctly handles bigint: String(12345n) === "12345"
-      requestUrl.searchParams.append(key, String(value));
-    }
-  }
+  const requestUrl = buildUrl(options.url, options.params);
 
-  // Inject cookies from the jar (merge with any caller-supplied Cookie header)
-  const cookies = jar.getCookies(requestUrl);
-  if (cookies.length > 0) {
-    const jarCookies = cookies.map((c) => `${c.name}=${c.value}`).join("; ");
-    const existing = headers.get("cookie");
-    headers.set("cookie", existing ? `${existing}; ${jarCookies}` : jarCookies);
-  }
+  applyCookiesToHeaders(headers, requestUrl, jar);
 
-  // Uint8Array is a valid BodyInit at runtime (ArrayBufferView) — no copy needed
-  const body: BodyInit | undefined =
-    options.body instanceof Uint8Array
-      ? (options.body as unknown as BodyInit)
-      : options.body
-        ? JSON.stringify(options.body)
-        : undefined;
-
-  if (options.body && !(options.body instanceof Uint8Array) && !headers.has("content-type")) {
-    headers.set("content-type", "application/json");
+  const body = serializeBody(options.body);
+  if (body !== undefined) {
+    applyJsonContentType(options.body, headers);
   }
 
   const requestConfig: RequestInit = {
@@ -146,35 +134,4 @@ function buildRequest(options: AptosClientRequest) {
   };
 
   return { requestUrl: requestUrl.toString(), requestConfig, jar };
-}
-
-/** Parse JSON safely, returning `null` for empty or no-content responses. @internal */
-// biome-ignore lint/suspicious/noExplicitAny: JSON.parse returns unknown shape; caller provides Res generic
-async function parseJsonSafely(res: Response, url: string): Promise<any> {
-  if (res.status === 204 || res.status === 205) {
-    return null;
-  }
-  const text = await res.text();
-  if (text.length === 0) {
-    return null;
-  }
-  try {
-    return JSON.parse(text);
-  } catch {
-    const pathname = new URL(url).pathname;
-    const err = new Error(`Failed to parse JSON response from ${pathname} (status ${res.status})`);
-    Object.defineProperty(err, "responseBody", { value: text.slice(0, 200), enumerable: false });
-    throw err;
-  }
-}
-
-/** Store any `Set-Cookie` headers from the response in the cookie jar. @internal */
-function handleSetCookieHeaders(res: Response, requestUrl: string, jar: CookieJarLike) {
-  const setCookies = res.headers.getSetCookie();
-  if (setCookies.length > 0) {
-    const url = new URL(requestUrl);
-    for (const c of setCookies) {
-      jar.setCookie(url, c);
-    }
-  }
 }
