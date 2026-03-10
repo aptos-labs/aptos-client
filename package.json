@@ -16,24 +16,44 @@
       "import": "./dist/fetch/index.fetch.mjs"
     },
     "browser": {
-      "types": "./dist/browser/index.browser.d.ts",
-      "require": "./dist/browser/index.browser.js",
-      "import": "./dist/browser/index.browser.mjs"
+      "import": {
+        "types": "./dist/browser/index.browser.d.mts",
+        "default": "./dist/browser/index.browser.mjs"
+      },
+      "require": {
+        "types": "./dist/browser/index.browser.d.ts",
+        "default": "./dist/browser/index.browser.js"
+      }
     },
     "react-native": {
-      "types": "./dist/fetch/index.fetch.d.mts",
-      "require": "./dist/fetch/index.fetch.js",
-      "import": "./dist/fetch/index.fetch.mjs"
+      "import": {
+        "types": "./dist/fetch/index.fetch.d.mts",
+        "default": "./dist/fetch/index.fetch.mjs"
+      },
+      "require": {
+        "types": "./dist/fetch/index.fetch.d.ts",
+        "default": "./dist/fetch/index.fetch.js"
+      }
     },
     "node": {
-      "types": "./dist/node/index.node.d.ts",
-      "require": "./dist/node/index.node.js",
-      "import": "./dist/node/index.node.mjs"
+      "import": {
+        "types": "./dist/node/index.node.d.mts",
+        "default": "./dist/node/index.node.mjs"
+      },
+      "require": {
+        "types": "./dist/node/index.node.d.ts",
+        "default": "./dist/node/index.node.js"
+      }
     },
     "default": {
-      "types": "./dist/fetch/index.fetch.d.mts",
-      "require": "./dist/fetch/index.fetch.js",
-      "import": "./dist/fetch/index.fetch.mjs"
+      "import": {
+        "types": "./dist/fetch/index.fetch.d.mts",
+        "default": "./dist/fetch/index.fetch.mjs"
+      },
+      "require": {
+        "types": "./dist/fetch/index.fetch.d.ts",
+        "default": "./dist/fetch/index.fetch.js"
+      }
     }
   },
   "browser": {

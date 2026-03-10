@@ -7,6 +7,7 @@
     "lib": ["ES2022", "DOM"],
     "module": "ES2022",
     "moduleResolution": "bundler",
+    "isolatedModules": true,
     "noImplicitAny": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
