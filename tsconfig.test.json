@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  // Deno/Bun integration tests use runtime-specific APIs (jsr:@std/assert, bun:test)
+  // and cannot be typechecked by tsc — covered by the test-deno/test-bun CI jobs.
+  "include": [
+    "src",
+    "test/server.ts",
+    "test/node.test.ts",
+    "test/fetch.test.ts",
+    "test/browser.test.ts",
+    "test/cookieJar.test.ts"
+  ],
+  "compilerOptions": {
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "allowImportingTsExtensions": true
+  }
+}

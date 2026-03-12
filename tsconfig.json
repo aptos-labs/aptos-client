@@ -1,19 +1,20 @@
 {
   "display": "Client Implementation",
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "allowJs": true,
     "declaration": true,
     "declarationMap": true,
     "esModuleInterop": true,
-    "experimentalDecorators": true,
-    "module": "esnext",
-    "moduleResolution": "node",
+    "lib": ["ES2022", "DOM"],
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
     "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "outDir": "./dist",
-    "sourceMap": true,
+    "skipLibCheck": true,
     "strict": true,
-    "target": "es2022",
+    "target": "ES2022",
     "pretty": true
   },
   "include": ["src"]

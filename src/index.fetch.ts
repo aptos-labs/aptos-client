@@ -1,20 +1,29 @@
 /**
- * Browser HTTP client using the native `fetch()` API.
+ * Fetch-based HTTP client for runtimes with native HTTP/2 support.
  *
  * @remarks
- * Selected via the `"browser"` export condition. HTTP/2 negotiation is
- * handled by the browser engine — the {@link AptosClientRequest.http2 | http2}
- * option is ignored. Cookie handling is delegated to the browser; this entry
- * point does not use a {@link CookieJar}.
+ * Used by Deno, Bun, React Native, and any other runtime that provides a
+ * spec-compliant `fetch()`. These runtimes negotiate HTTP/2 automatically
+ * via ALPN, so the {@link AptosClientRequest.http2 | http2} option is
+ * ignored.
  *
- * The `credentials` mode on each request is controlled via
- * `overrides.WITH_CREDENTIALS` (`false` → `"omit"`,
- * default/`true` → `"include"`).
- *
- * @module index.browser
+ * @module index.fetch
  */
-import { applyJsonContentType, buildUrl, parseJsonSafely, serializeBody } from "./shared";
+import { CookieJar } from "./cookieJar";
+import {
+  applyCookiesToHeaders,
+  applyJsonContentType,
+  buildUrl,
+  parseJsonSafely,
+  serializeBody,
+  storeResponseCookies,
+} from "./shared";
 import type { AptosClientRequest, AptosClientResponse } from "./types";
+
+export { CookieJar } from "./cookieJar";
+export type { CookieJarLike } from "./types";
+
+const defaultCookieJar = new CookieJar();
 
 let http2Warned = false;
 
@@ -26,6 +35,16 @@ let http2Warned = false;
  * @typeParam Res - Expected shape of the JSON response body.
  * @param options - Request configuration.
  * @returns Parsed response with status, headers, and deserialized body.
+ *
+ * @example
+ * ```ts
+ * import aptosClient from "@aptos-labs/aptos-client";
+ *
+ * const { data } = await aptosClient<{ chain_id: number }>({
+ *   url: "https://fullnode.mainnet.aptoslabs.com/v1",
+ *   method: "GET",
+ * });
+ * ```
  */
 export default async function aptosClient<Res>(options: AptosClientRequest): Promise<AptosClientResponse<Res>> {
   return jsonRequest<Res>(options);
@@ -40,9 +59,10 @@ export default async function aptosClient<Res>(options: AptosClientRequest): Pro
  * @param options - Request configuration.
  */
 export async function jsonRequest<Res>(options: AptosClientRequest): Promise<AptosClientResponse<Res>> {
-  const { requestUrl, requestConfig } = buildRequest(options);
+  const { requestUrl, requestConfig, jar } = buildRequest(options);
 
   const res = await fetch(requestUrl, requestConfig);
+  storeResponseCookies(new URL(requestUrl), res.headers, jar);
   const data = await parseJsonSafely(res, requestUrl);
 
   return {
@@ -63,9 +83,10 @@ export async function jsonRequest<Res>(options: AptosClientRequest): Promise<Apt
  * @param options - Request configuration.
  */
 export async function bcsRequest(options: AptosClientRequest): Promise<AptosClientResponse<ArrayBuffer>> {
-  const { requestUrl, requestConfig } = buildRequest(options);
+  const { requestUrl, requestConfig, jar } = buildRequest(options);
 
   const res = await fetch(requestUrl, requestConfig);
+  storeResponseCookies(new URL(requestUrl), res.headers, jar);
   const data = await res.arrayBuffer();
 
   return {
@@ -88,6 +109,8 @@ function buildRequest(options: AptosClientRequest) {
     console.warn("[aptos-client] The `http2` option is only supported by the Node entry point and is ignored here.");
   }
 
+  const jar = options.cookieJar ?? defaultCookieJar;
+
   const headers = new Headers();
   for (const [key, value] of Object.entries(options?.headers ?? {})) {
     if (value !== undefined) {
@@ -95,21 +118,20 @@ function buildRequest(options: AptosClientRequest) {
     }
   }
 
+  const requestUrl = buildUrl(options.url, options.params);
+
+  applyCookiesToHeaders(headers, requestUrl, jar);
+
   const body = serializeBody(options.body);
   if (body !== undefined) {
     applyJsonContentType(options.body, headers);
   }
 
-  const credentials: RequestCredentials = options.overrides?.WITH_CREDENTIALS === false ? "omit" : "include";
-
   const requestConfig: RequestInit = {
     method: options.method,
     headers,
     body,
-    credentials,
   };
 
-  const requestUrl = buildUrl(options.url, options.params);
-
-  return { requestUrl: requestUrl.toString(), requestConfig };
+  return { requestUrl: requestUrl.toString(), requestConfig, jar };
 }
