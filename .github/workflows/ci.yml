@@ -37,6 +37,8 @@ jobs:
 
       - run: pnpm test
 
+      - run: pnpm test:build
+
   test-deno:
     runs-on: ubuntu-latest
     steps:

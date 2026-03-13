@@ -7,52 +7,54 @@
     "node": ">=22.0.0"
   },
   "exports": {
-    "deno": {
-      "types": "./dist/fetch/index.fetch.d.mts",
-      "import": "./dist/fetch/index.fetch.mjs"
-    },
-    "bun": {
-      "types": "./dist/fetch/index.fetch.d.mts",
-      "import": "./dist/fetch/index.fetch.mjs"
-    },
-    "browser": {
-      "import": {
-        "types": "./dist/browser/index.browser.d.mts",
-        "default": "./dist/browser/index.browser.mjs"
-      },
-      "require": {
-        "types": "./dist/browser/index.browser.d.ts",
-        "default": "./dist/browser/index.browser.js"
-      }
-    },
-    "react-native": {
-      "import": {
+    ".": {
+      "deno": {
         "types": "./dist/fetch/index.fetch.d.mts",
-        "default": "./dist/fetch/index.fetch.mjs"
+        "import": "./dist/fetch/index.fetch.mjs"
       },
-      "require": {
-        "types": "./dist/fetch/index.fetch.d.ts",
-        "default": "./dist/fetch/index.fetch.js"
-      }
-    },
-    "node": {
-      "import": {
-        "types": "./dist/node/index.node.d.mts",
-        "default": "./dist/node/index.node.mjs"
-      },
-      "require": {
-        "types": "./dist/node/index.node.d.ts",
-        "default": "./dist/node/index.node.js"
-      }
-    },
-    "default": {
-      "import": {
+      "bun": {
         "types": "./dist/fetch/index.fetch.d.mts",
-        "default": "./dist/fetch/index.fetch.mjs"
+        "import": "./dist/fetch/index.fetch.mjs"
       },
-      "require": {
-        "types": "./dist/fetch/index.fetch.d.ts",
-        "default": "./dist/fetch/index.fetch.js"
+      "browser": {
+        "import": {
+          "types": "./dist/browser/index.browser.d.mts",
+          "default": "./dist/browser/index.browser.mjs"
+        },
+        "require": {
+          "types": "./dist/browser/index.browser.d.ts",
+          "default": "./dist/browser/index.browser.js"
+        }
+      },
+      "react-native": {
+        "import": {
+          "types": "./dist/fetch/index.fetch.d.mts",
+          "default": "./dist/fetch/index.fetch.mjs"
+        },
+        "require": {
+          "types": "./dist/fetch/index.fetch.d.ts",
+          "default": "./dist/fetch/index.fetch.js"
+        }
+      },
+      "node": {
+        "import": {
+          "types": "./dist/node/index.node.d.mts",
+          "default": "./dist/node/index.node.mjs"
+        },
+        "require": {
+          "types": "./dist/node/index.node.d.ts",
+          "default": "./dist/node/index.node.js"
+        }
+      },
+      "default": {
+        "import": {
+          "types": "./dist/fetch/index.fetch.d.mts",
+          "default": "./dist/fetch/index.fetch.mjs"
+        },
+        "require": {
+          "types": "./dist/fetch/index.fetch.d.ts",
+          "default": "./dist/fetch/index.fetch.js"
+        }
       }
     }
   },
@@ -80,6 +82,7 @@
     "test:browser": "tsx --test --test-force-exit test/browser.test.ts",
     "test:deno": "deno test --allow-net=127.0.0.1 --allow-run=npx --allow-read=. --allow-env --unsafely-ignore-certificate-errors=127.0.0.1 test/deno.integration.ts",
     "test:bun": "bun test ./test/bun.integration.ts",
+    "test:build": "pnpm build && tsx --test --test-force-exit test/build.test.ts",
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "fmt": "biome format --write",
@@ -101,7 +104,7 @@
     "Aptos SDK"
   ],
   "peerDependencies": {
-    "undici": "^7.22.0"
+    "undici": "^7.24.1"
   },
   "peerDependenciesMeta": {
     "undici": {
@@ -112,9 +115,10 @@
     "@biomejs/biome": "^2.4.6",
     "@types/node": "^22.19.15",
     "tsx": "^4.21.0",
+    "esbuild": "^0.27.4",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "undici": "^7.22.0"
+    "undici": "^7.24.1"
   },
-  "version": "3.0.0"
+  "version": "3.0.1"
 }
