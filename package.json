@@ -82,7 +82,7 @@
     "test:browser": "tsx --test --test-force-exit test/browser.test.ts",
     "test:deno": "deno test --allow-net=127.0.0.1 --allow-run=npx --allow-read=. --allow-env --unsafely-ignore-certificate-errors=127.0.0.1 test/deno.integration.ts",
     "test:bun": "bun test ./test/bun.integration.ts",
-    "test:build": "tsx --test --test-force-exit test/build.test.ts",
+    "test:build": "pnpm build && tsx --test --test-force-exit test/build.test.ts",
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "fmt": "biome format --write",

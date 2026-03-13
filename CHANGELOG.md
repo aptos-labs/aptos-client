@@ -9,6 +9,10 @@ adheres to the format set out by [Keep a Changelog](https://keepachangelog.com/e
 
 - **Build compatibility tests** — New `test:build` script verifies the package is consumable by downstream projects using `tsc` (with `moduleResolution` set to `bundler`, `node16`, and `nodenext`) and `esbuild` (targeting both `node` and `browser` platforms).
 
+### Changed
+
+- **`undici` dependency range** — Updated the `undici` peer and dev dependency ranges to reflect the versions validated by this release.
+
 # 3.0.0
 
 ### Breaking Changes
