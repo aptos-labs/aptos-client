@@ -3,6 +3,12 @@
 All notable changes to the Aptos client will be captured in this file. This changelog is written by hand for now. It
 adheres to the format set out by [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+# 3.0.1
+
+### Added
+
+- **Build compatibility tests** — New `test:build` script verifies the package is consumable by downstream projects using `tsc` (with `moduleResolution` set to `bundler`, `node16`, and `nodenext`) and `esbuild` (targeting both `node` and `browser` platforms).
+
 # 3.0.0
 
 ### Breaking Changes
@@ -30,29 +36,29 @@ adheres to the format set out by [Keep a Changelog](https://keepachangelog.com/e
 
 **Bundle size (JS output only):**
 
-| Entry point | v2.2.0 | v3.0.0 | Change |
-|---|---|---|---|
-| Node CJS | 7.04 KB | 6.91 KB | −0.13 KB |
-| Node ESM | 5.35 KB | 5.85 KB | +0.50 KB |
-| Browser CJS | 2.81 KB | 2.82 KB | +0.01 KB |
-| Browser ESM | 1.76 KB | 1.77 KB | +0.01 KB |
-| Fetch CJS | — | 5.58 KB | new |
-| Fetch ESM | — | 4.52 KB | new |
+| Entry point     | v2.2.0    | v3.0.0     | Change                                             |
+|-----------------|-----------|------------|----------------------------------------------------|
+| Node CJS        | 7.04 KB   | 6.91 KB    | −0.13 KB                                           |
+| Node ESM        | 5.35 KB   | 5.85 KB    | +0.50 KB                                           |
+| Browser CJS     | 2.81 KB   | 2.82 KB    | +0.01 KB                                           |
+| Browser ESM     | 1.76 KB   | 1.77 KB    | +0.01 KB                                           |
+| Fetch CJS       | —         | 5.58 KB    | new                                                |
+| Fetch ESM       | —         | 4.52 KB    | new                                                |
 | **Total dist/** | **64 KB** | **104 KB** | +40 KB (includes new fetch entry + expanded .d.ts) |
 
 **Dependencies:**
 
-| | v2.2.0 (`got`) | v3.0.0 (`undici`) |
-|---|---|---|
-| Production deps | ~47 packages (got + transitive) | 1 package (undici, optional) |
-| Non-Node runtimes | N/A (browser entry had no deps) | 0 packages |
+|                   | v2.2.0 (`got`)                  | v3.0.0 (`undici`)            |
+|-------------------|---------------------------------|------------------------------|
+| Production deps   | ~47 packages (got + transitive) | 1 package (undici, optional) |
+| Non-Node runtimes | N/A (browser entry had no deps) | 0 packages                   |
 
 **Build time:**
 
-| | v2.2.0 | v3.0.0 |
-|---|---|---|
-| Wall time | ~3.8s (sequential) | ~2.5s (parallel via tsup config) |
-| Entry points | 2 (node, browser) | 3 (node, browser, fetch) |
+|              | v2.2.0             | v3.0.0                           |
+|--------------|--------------------|----------------------------------|
+| Wall time    | ~3.8s (sequential) | ~2.5s (parallel via tsup config) |
+| Entry points | 2 (node, browser)  | 3 (node, browser, fetch)         |
 
 # Released
 

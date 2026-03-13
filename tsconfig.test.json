@@ -8,7 +8,8 @@
     "test/node.test.ts",
     "test/fetch.test.ts",
     "test/browser.test.ts",
-    "test/cookieJar.test.ts"
+    "test/cookieJar.test.ts",
+    "test/build.test.ts"
   ],
   "compilerOptions": {
     "noUnusedLocals": false,
