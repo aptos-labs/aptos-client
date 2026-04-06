@@ -116,7 +116,7 @@ async function doRequest<Res>(
 
   storeResponseCookies(requestUrl, res.headers, jar);
 
-  const data = mode === "json" ? await parseJsonSafely(res, requestUrl) : await res.arrayBuffer();
+  const data = mode === "json" ? await parseJsonSafely(res) : await res.arrayBuffer();
 
   return {
     status: res.status,

@@ -58,11 +58,17 @@ export function applyJsonContentType(body: unknown, headers: Headers): void {
 }
 
 /**
- * Parse a response body as JSON, returning `null` for empty or no-content responses.
+ * Parse a response body as JSON, returning the raw text when parsing fails.
+ *
+ * Returning raw text (instead of throwing) preserves backward compatibility
+ * with v2, where `got` returned error responses as normal `AptosClientResponse`
+ * objects. This lets the caller (e.g. the TS SDK) inspect the status code and
+ * handle the error however it chooses.
+ *
  * @internal
  */
 // biome-ignore lint/suspicious/noExplicitAny: JSON.parse returns unknown shape; caller provides Res generic
-export async function parseJsonSafely(res: Response, url: string | URL): Promise<any> {
+export async function parseJsonSafely(res: Response): Promise<any> {
   if (res.status === 204 || res.status === 205) {
     return null;
   }
@@ -73,10 +79,7 @@ export async function parseJsonSafely(res: Response, url: string | URL): Promise
   try {
     return JSON.parse(text);
   } catch {
-    const pathname = typeof url === "string" ? new URL(url).pathname : url.pathname;
-    const err = new Error(`Failed to parse JSON response from ${pathname} (status ${res.status})`);
-    Object.defineProperty(err, "responseBody", { value: text.slice(0, 200), enumerable: false });
-    throw err;
+    return text;
   }
 }
 

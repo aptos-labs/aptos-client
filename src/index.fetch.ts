@@ -64,7 +64,7 @@ export async function jsonRequest<Res>(options: AptosClientRequest): Promise<Apt
 
   const res = await fetch(requestUrl, requestConfig);
   storeResponseCookies(new URL(requestUrl), res.headers, jar);
-  const data = await parseJsonSafely(res, requestUrl);
+  const data = await parseJsonSafely(res);
 
   return {
     status: res.status,

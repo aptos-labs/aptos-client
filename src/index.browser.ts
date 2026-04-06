@@ -43,7 +43,7 @@ export async function jsonRequest<Res>(options: AptosClientRequest): Promise<Apt
   const { requestUrl, requestConfig } = buildRequest(options);
 
   const res = await fetch(requestUrl, requestConfig);
-  const data = await parseJsonSafely(res, requestUrl);
+  const data = await parseJsonSafely(res);
 
   return {
     status: res.status,
