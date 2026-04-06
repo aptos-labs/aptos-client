@@ -119,3 +119,7 @@ jobs:
       - name: Build SDK with local aptos-client
         working-directory: aptos-ts-sdk
         run: pnpm build
+
+      - name: Run SDK unit tests with local aptos-client
+        working-directory: aptos-ts-sdk
+        run: pnpm unit-test
