@@ -15,6 +15,7 @@ import {
   applyCookiesToHeaders,
   applyJsonContentType,
   buildUrl,
+  headersToRecord,
   parseJsonSafely,
   serializeBody,
   storeResponseCookies,
@@ -121,13 +122,13 @@ async function doRequest<Res>(
     status: res.status,
     statusText: res.statusText,
     data,
-    config: init,
+    config: { ...init, headers: headersToRecord(requestHeaders) },
     request: {
       url: requestUrl.toString(),
       method,
     },
     response: res,
-    headers: res.headers,
+    headers: headersToRecord(res.headers),
   };
 }
 

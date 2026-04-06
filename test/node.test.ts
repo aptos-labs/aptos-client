@@ -113,7 +113,7 @@ describe("node client (undici)", () => {
       http2: true,
     });
     assert.equal(res.status, 200);
-    assert.equal(res.headers.get("x-http-version"), "2.0", "undici with allowH2 should negotiate HTTP/2 via ALPN");
+    assert.equal(res.headers["x-http-version"], "2.0", "undici with allowH2 should negotiate HTTP/2 via ALPN");
   });
 
   it("HTTP/2: falls back to HTTP/1.1 when http2: false", async () => {
@@ -123,7 +123,7 @@ describe("node client (undici)", () => {
       http2: false,
     });
     assert.equal(res.status, 200);
-    assert.equal(res.headers.get("x-http-version"), "1.1");
+    assert.equal(res.headers["x-http-version"], "1.1");
   });
 
   it("HTTP/2: BCS over h2", async () => {
@@ -133,7 +133,7 @@ describe("node client (undici)", () => {
       http2: true,
     });
     assert.equal(res.status, 200);
-    assert.equal(res.headers.get("x-http-version"), "2.0");
+    assert.equal(res.headers["x-http-version"], "2.0");
     const bytes = new Uint8Array(res.data as ArrayBuffer);
     assert.deepEqual([...bytes], [0xde, 0xad, 0xbe, 0xef]);
   });

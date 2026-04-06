@@ -106,3 +106,22 @@ export function storeResponseCookies(url: URL, headers: Headers, jar: CookieJarL
     jar.setCookie(url, cookie);
   }
 }
+
+/**
+ * Convert a `Headers` instance to a plain `Record<string, string>`.
+ *
+ * This preserves backward compatibility with aptos-client v2, which
+ * returned Node's `IncomingHttpHeaders` (a plain object) from the `got`
+ * library. Consumers (e.g. the TS SDK) access headers via bracket
+ * notation (`response.headers["x-aptos-cursor"]`), which only works on
+ * plain objects — not on `Headers` instances.
+ *
+ * @internal
+ */
+export function headersToRecord(headers: Headers): Record<string, string> {
+  const result: Record<string, string> = {};
+  headers.forEach((value, key) => {
+    result[key] = value;
+  });
+  return result;
+}
