@@ -114,7 +114,7 @@ describe("fetch client", () => {
     assert.equal(res.status, 200);
     // Node's undici-based fetch cannot negotiate HTTP/2 — always falls back to 1.1
     assert.equal(
-      res.headers["x-http-version"],
+      res.headers?.["x-http-version"],
       "1.1",
       "Under Node, fetch does NOT support HTTP/2. Deno and Bun negotiate h2 automatically.",
     );
