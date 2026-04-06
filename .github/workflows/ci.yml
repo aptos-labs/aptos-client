@@ -128,7 +128,10 @@ jobs:
         with:
           max_attempts: 3
           timeout_minutes: 25
-          command: cd aptos-ts-sdk && pnpm test
+          # Exclude get.test.ts: it asserts v2-specific `request.overrides` shape
+          # which changed in v3 (`request` is now `{ url, method }`).
+          # The SDK will update these tests when it upgrades to client v3.
+          command: cd aptos-ts-sdk && pnpm vitest run --exclude tests/e2e/client/get.test.ts
 
       - name: Print local testnet logs on failure
         if: failure()
