@@ -104,7 +104,7 @@ function buildRequest(options: AptosClientRequest) {
 
   const requestConfig: RequestInit = {
     method: options.method,
-    headers: headersToRecord(headers),
+    headers: headersToRecord(headers) as Record<string, string>,
     body,
     credentials,
   };

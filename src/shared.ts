@@ -111,7 +111,7 @@ export function storeResponseCookies(url: URL, headers: Headers, jar: CookieJarL
 }
 
 /**
- * Convert a `Headers` instance to a plain `Record<string, string>`.
+ * Convert a `Headers` instance to a plain `Record<string, string | string[]>`.
  *
  * This preserves backward compatibility with aptos-client v2, which
  * returned Node's `IncomingHttpHeaders` (a plain object) from the `got`
@@ -119,12 +119,21 @@ export function storeResponseCookies(url: URL, headers: Headers, jar: CookieJarL
  * notation (`response.headers["x-aptos-cursor"]`), which only works on
  * plain objects — not on `Headers` instances.
  *
+ * Multi-value `set-cookie` headers are returned as `string[]` to match
+ * Node's `IncomingHttpHeaders` shape and avoid losing cookie boundaries.
+ *
  * @internal
  */
-export function headersToRecord(headers: Headers): Record<string, string> {
-  const result: Record<string, string> = {};
+export function headersToRecord(headers: Headers): Record<string, string | string[]> {
+  const result: Record<string, string | string[]> = {};
   headers.forEach((value, key) => {
     result[key] = value;
   });
+  if (typeof headers.getSetCookie === "function") {
+    const cookies = headers.getSetCookie();
+    if (cookies.length > 0) {
+      result["set-cookie"] = cookies;
+    }
+  }
   return result;
 }

@@ -22,7 +22,7 @@ export type AptosClientResponse<Res> = {
   // biome-ignore lint/suspicious/noExplicitAny: cross-platform response type; varies per entry point
   response?: any;
   /** Response headers as a plain key-value record. */
-  headers?: Record<string, string>;
+  headers?: Record<string, string | string[]>;
 };
 
 /**
