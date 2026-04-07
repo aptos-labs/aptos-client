@@ -56,4 +56,9 @@ jobs:
 
       - run: pnpm test
 
+      - name: Upgrade npm (OIDC scoped-package fix)
+        run: |
+          npm_tarball="$(npm pack npm@latest --pack-destination /tmp 2>/dev/null)"
+          npm install -g "/tmp/$npm_tarball"
+
       - run: npm publish --provenance --access public
