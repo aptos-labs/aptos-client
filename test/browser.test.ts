@@ -115,7 +115,7 @@ describe("browser client", () => {
     });
     assert.equal(res.status, 200);
     assert.equal(
-      res.headers.get("x-http-version"),
+      res.headers?.["x-http-version"],
       "1.1",
       "Under Node, browser client falls back to 1.1. In a real browser, h2 is negotiated by the engine.",
     );

@@ -15,6 +15,7 @@ import {
   applyCookiesToHeaders,
   applyJsonContentType,
   buildUrl,
+  headersToRecord,
   parseJsonSafely,
   serializeBody,
   storeResponseCookies,
@@ -115,19 +116,19 @@ async function doRequest<Res>(
 
   storeResponseCookies(requestUrl, res.headers, jar);
 
-  const data = mode === "json" ? await parseJsonSafely(res, requestUrl) : await res.arrayBuffer();
+  const data = mode === "json" ? await parseJsonSafely(res) : await res.arrayBuffer();
 
   return {
     status: res.status,
     statusText: res.statusText,
     data,
-    config: init,
+    config: { ...init, headers: headersToRecord(requestHeaders) },
     request: {
       url: requestUrl.toString(),
       method,
     },
     response: res,
-    headers: res.headers,
+    headers: headersToRecord(res.headers),
   };
 }
 

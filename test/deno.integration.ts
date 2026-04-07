@@ -9,7 +9,8 @@
 import { assert, assertEquals } from "jsr:@std/assert";
 
 // Import the built fetch client
-const { default: _aptosClient, jsonRequest, bcsRequest } = await import("../dist/fetch/index.fetch.mjs");
+// deno-lint-ignore no-explicit-any
+const { default: _aptosClient, jsonRequest, bcsRequest } = (await import("../dist/fetch/index.fetch.mjs")) as any;
 
 let h1Url: string;
 let h2Url: string;
@@ -123,7 +124,7 @@ Deno.test({
       method: "GET",
     });
     assertEquals(res.status, 200);
-    const version = res.headers.get("x-http-version");
+    const version = res.headers?.["x-http-version"];
     console.log(`  Deno negotiated HTTP version: ${version}`);
     assertEquals(version, "2.0", "Deno's native fetch should negotiate HTTP/2 via ALPN");
   },

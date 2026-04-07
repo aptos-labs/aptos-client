@@ -14,6 +14,7 @@ import {
   applyCookiesToHeaders,
   applyJsonContentType,
   buildUrl,
+  headersToRecord,
   parseJsonSafely,
   serializeBody,
   storeResponseCookies,
@@ -63,13 +64,13 @@ export async function jsonRequest<Res>(options: AptosClientRequest): Promise<Apt
 
   const res = await fetch(requestUrl, requestConfig);
   storeResponseCookies(new URL(requestUrl), res.headers, jar);
-  const data = await parseJsonSafely(res, requestUrl);
+  const data = await parseJsonSafely(res);
 
   return {
     status: res.status,
     statusText: res.statusText,
     data,
-    headers: res.headers,
+    headers: headersToRecord(res.headers),
     config: requestConfig,
   };
 }
@@ -93,7 +94,7 @@ export async function bcsRequest(options: AptosClientRequest): Promise<AptosClie
     status: res.status,
     statusText: res.statusText,
     data,
-    headers: res.headers,
+    headers: headersToRecord(res.headers),
     config: requestConfig,
   };
 }
@@ -129,7 +130,7 @@ function buildRequest(options: AptosClientRequest) {
 
   const requestConfig: RequestInit = {
     method: options.method,
-    headers,
+    headers: headersToRecord(headers) as Record<string, string>,
     body,
   };
 

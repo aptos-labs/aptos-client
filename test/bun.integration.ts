@@ -91,7 +91,7 @@ describe("bun — HTTP/2", () => {
       method: "GET",
     });
     expect(res.status).toBe(200);
-    const version = res.headers.get("x-http-version");
+    const version = res.headers["x-http-version"];
     console.log(`  Bun negotiated HTTP version: ${version}`);
     // Bun 1.x fetch does NOT negotiate HTTP/2 — it falls back to 1.1.
     // This is a known Bun limitation. Track: https://github.com/oven-sh/bun/issues/887

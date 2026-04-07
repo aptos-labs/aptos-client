@@ -115,7 +115,21 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm add ../aptos-labs-aptos-client-*.tgz
+          pnpm add undici@^7
 
       - name: Build SDK with local aptos-client
         working-directory: aptos-ts-sdk
         run: pnpm build
+
+      - name: Run SDK tests (unit + e2e) with local aptos-client
+        uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # pin@v3
+        env:
+          TMPDIR: ${{ runner.temp }}
+        with:
+          max_attempts: 3
+          timeout_minutes: 25
+          command: cd aptos-ts-sdk && pnpm test
+
+      - name: Print local testnet logs on failure
+        if: failure()
+        run: cat ${{ runner.temp }}/local-testnet-logs.txt || true
