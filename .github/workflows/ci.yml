@@ -115,7 +115,7 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm add ../aptos-labs-aptos-client-*.tgz
-          pnpm add --no-save undici@7
+          pnpm add undici@^7
 
       - name: Build SDK with local aptos-client
         working-directory: aptos-ts-sdk
