@@ -23,12 +23,6 @@ npm install @aptos-labs/aptos-client
 pnpm add @aptos-labs/aptos-client
 ```
 
-`undici` is an optional peer dependency — only needed in Node.js:
-
-```bash
-npm install undici
-```
-
 ## Usage
 
 ```ts
@@ -86,7 +80,7 @@ type AptosClientResponse<Res> = {
   config?: any;
   request?: any;
   response?: any;
-  headers?: any;
+  headers?: Record<string, string | string[]>;
 };
 ```
 
