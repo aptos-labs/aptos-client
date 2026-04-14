@@ -31,6 +31,14 @@ adheres to the format set out by [Keep a Changelog](https://keepachangelog.com/e
 ### Fixed
 
 - Fixes the breaking change between 2.x and 3.x around headers. This is a breaking change from 3.0.0 and 3.0.1, but no downstream dependencies were using it.
+- Export `AptosClientRequest`, `AptosClientResponse`, and `CookieJarLike` types from all entry points.
+- Export `Cookie` type from Node and fetch entry points.
+
+# 3.0.2
+
+### Fixed
+
+- Return response headers as plain `Record<string, string | string[]>` objects instead of `Headers` instances, restoring backward compatibility with v2 consumers that access headers via bracket notation.
 
 # 3.0.1
 

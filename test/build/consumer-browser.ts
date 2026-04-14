@@ -1,6 +1,7 @@
 /**
  * Consumer fixture — simulates a browser project importing this package.
- * The browser entry point does NOT export CookieJar/CookieJarLike.
+ * The browser entry point does NOT export the CookieJar class (cookies are
+ * managed by the browser engine), but CookieJarLike type is available.
  * Used by the esbuild browser platform test.
  */
 import aptosClient, { bcsRequest, jsonRequest } from "@aptos-labs/aptos-client";

@@ -1,5 +1,5 @@
 /** A parsed cookie with optional attributes. */
-interface Cookie {
+export interface Cookie {
   name: string;
   value: string;
   expires?: Date;
@@ -27,7 +27,7 @@ export class CookieJar {
   /** RFC 6265 §6.1 recommends at least 4096 bytes per cookie. */
   static readonly MAX_COOKIE_SIZE = 8192;
 
-  constructor(private jar = new Map<string, Cookie[]>()) {}
+  private jar = new Map<string, Cookie[]>();
 
   /**
    * Store a `Set-Cookie` header value for the given URL's origin.

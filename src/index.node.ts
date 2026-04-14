@@ -22,6 +22,7 @@ import {
 } from "./shared.js";
 import type { AptosClientRequest, AptosClientResponse, CookieJarLike } from "./types.js";
 
+export type { Cookie } from "./cookieJar.js";
 export { CookieJar } from "./cookieJar.js";
 export type { AptosClientRequest, AptosClientResponse, CookieJarLike } from "./types.js";
 
