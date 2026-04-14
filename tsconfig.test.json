@@ -12,6 +12,7 @@
     "test/build.test.ts"
   ],
   "compilerOptions": {
+    "rootDir": ".",
     "noUnusedLocals": false,
     "noUnusedParameters": false
   }

@@ -31,9 +31,9 @@ jobs:
 
       - name: Verify declaration files exist
         run: |
-          test -f dist/fetch/index.fetch.d.ts     || { echo "Missing dist/fetch/index.fetch.d.ts"; exit 1; }
-          test -f dist/node/index.node.d.ts       || { echo "Missing dist/node/index.node.d.ts"; exit 1; }
-          test -f dist/browser/index.browser.d.ts || { echo "Missing dist/browser/index.browser.d.ts"; exit 1; }
+          test -f dist/index.fetch.d.ts   || { echo "Missing dist/index.fetch.d.ts"; exit 1; }
+          test -f dist/index.node.d.ts   || { echo "Missing dist/index.node.d.ts"; exit 1; }
+          test -f dist/index.browser.d.ts || { echo "Missing dist/index.browser.d.ts"; exit 1; }
 
       - run: pnpm test
 

@@ -10,46 +10,46 @@
   "exports": {
     ".": {
       "deno": {
-        "types": "./dist/fetch/index.fetch.d.ts",
-        "default": "./dist/fetch/index.fetch.js"
+        "types": "./dist/index.fetch.d.ts",
+        "default": "./dist/index.fetch.js"
       },
       "bun": {
-        "types": "./dist/fetch/index.fetch.d.ts",
-        "default": "./dist/fetch/index.fetch.js"
+        "types": "./dist/index.fetch.d.ts",
+        "default": "./dist/index.fetch.js"
       },
       "browser": {
-        "types": "./dist/browser/index.browser.d.ts",
-        "default": "./dist/browser/index.browser.js"
+        "types": "./dist/index.browser.d.ts",
+        "default": "./dist/index.browser.js"
       },
       "react-native": {
-        "types": "./dist/fetch/index.fetch.d.ts",
-        "default": "./dist/fetch/index.fetch.js"
+        "types": "./dist/index.fetch.d.ts",
+        "default": "./dist/index.fetch.js"
       },
       "node": {
-        "types": "./dist/node/index.node.d.ts",
-        "default": "./dist/node/index.node.js"
+        "types": "./dist/index.node.d.ts",
+        "default": "./dist/index.node.js"
       },
       "default": {
-        "types": "./dist/fetch/index.fetch.d.ts",
-        "default": "./dist/fetch/index.fetch.js"
+        "types": "./dist/index.fetch.d.ts",
+        "default": "./dist/index.fetch.js"
       }
     }
   },
   "browser": {
-    "./dist/node/index.node.js": "./dist/browser/index.browser.js"
+    "./dist/index.node.js": "./dist/index.browser.js"
   },
   "react-native": {
-    "./dist/node/index.node.js": "./dist/fetch/index.fetch.js"
+    "./dist/index.node.js": "./dist/index.fetch.js"
   },
-  "main": "./dist/node/index.node.js",
+  "main": "./dist/index.node.js",
   "sideEffects": false,
-  "types": "./dist/node/index.node.d.ts",
+  "types": "./dist/index.node.d.ts",
   "files": [
     "./dist/"
   ],
   "scripts": {
     "build:clean": "rm -rf dist",
-    "build": "pnpm build:clean && tsup",
+    "build": "pnpm build:clean && tsc",
     "test": "tsx --test --test-force-exit test/node.test.ts test/fetch.test.ts test/browser.test.ts test/cookieJar.test.ts",
     "test:node": "tsx --test --test-force-exit test/node.test.ts",
     "test:fetch": "tsx --test --test-force-exit test/fetch.test.ts",
@@ -90,7 +90,6 @@
     "@types/node": "^22.19.15",
     "tsx": "^4.21.0",
     "esbuild": "^0.27.4",
-    "tsup": "^8.5.1",
     "typescript": "^6.0.2",
     "undici": "^7.24.1",
     "picomatch": "^4.0.4",
