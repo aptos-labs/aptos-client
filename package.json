@@ -17,6 +17,14 @@
         "types": "./dist/index.fetch.d.ts",
         "default": "./dist/index.fetch.js"
       },
+      "workerd": {
+        "types": "./dist/index.fetch.d.ts",
+        "default": "./dist/index.fetch.js"
+      },
+      "edge-light": {
+        "types": "./dist/index.fetch.d.ts",
+        "default": "./dist/index.fetch.js"
+      },
       "browser": {
         "types": "./dist/index.browser.d.ts",
         "default": "./dist/index.browser.js"
@@ -35,13 +43,6 @@
       }
     }
   },
-  "browser": {
-    "./dist/index.node.js": "./dist/index.browser.js"
-  },
-  "react-native": {
-    "./dist/index.node.js": "./dist/index.fetch.js"
-  },
-  "main": "./dist/index.node.js",
   "sideEffects": false,
   "types": "./dist/index.node.d.ts",
   "files": [

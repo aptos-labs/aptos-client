@@ -18,6 +18,8 @@ adheres to the format set out by [Keep a Changelog](https://keepachangelog.com/e
 - **Build with `tsc` instead of `tsup`** — Plain `tsc` compiles directly to a flat `dist/` directory. No bundler needed.
 - **`undici` is now a regular dependency** — Previously an optional peer dependency. The Node.js entry point always imports it, so making it a regular dependency prevents confusing `ERR_MODULE_NOT_FOUND` errors. Browser, Deno, Bun, and React Native entry points never load it.
 - **Flat `dist/` layout** — Output files moved from `dist/node/`, `dist/browser/`, `dist/fetch/` to a single `dist/` directory.
+- **Added `workerd` and `edge-light` export conditions** — Cloudflare Workers and Vercel Edge Functions now resolve to the fetch-based entry point automatically.
+- **Removed legacy `main`, `browser`, and `react-native` top-level fields** — The `exports` map is the sole entry point resolution mechanism. Only `types` is kept as a TypeScript fallback.
 
 ### Removed
 

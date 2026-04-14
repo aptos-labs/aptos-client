@@ -57,6 +57,8 @@ The package uses [conditional exports](https://nodejs.org/api/packages.html#cond
 | `react-native` | `index.fetch.ts` | Automatic (OkHttp / NSURLSession) | Platform negotiates HTTP/2 via ALPN |
 | `deno` | `index.fetch.ts` | Automatic | — |
 | `bun` | `index.fetch.ts` | Automatic | — |
+| `workerd` | `index.fetch.ts` | Automatic | Cloudflare Workers |
+| `edge-light` | `index.fetch.ts` | Automatic | Vercel Edge Functions |
 | `default` | `index.fetch.ts` | Depends on runtime | Fallback for unknown runtimes |
 
 ## Types
