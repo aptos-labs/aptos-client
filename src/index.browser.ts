@@ -13,8 +13,8 @@
  *
  * @module index.browser
  */
-import { applyJsonContentType, buildUrl, headersToRecord, parseJsonSafely, serializeBody } from "./shared";
-import type { AptosClientRequest, AptosClientResponse } from "./types";
+import { applyJsonContentType, buildUrl, headersToRecord, parseJsonSafely, serializeBody } from "./shared.js";
+import type { AptosClientRequest, AptosClientResponse } from "./types.js";
 
 let http2Warned = false;
 

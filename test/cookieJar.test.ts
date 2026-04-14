@@ -4,7 +4,7 @@
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { CookieJar } from "../src/cookieJar.ts";
+import { CookieJar } from "../src/cookieJar.js";
 
 const url = new URL("https://example.com");
 const httpUrl = new URL("http://example.com");

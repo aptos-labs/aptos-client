@@ -8,7 +8,7 @@
  * @internal
  * @module shared
  */
-import type { AptosClientRequest, CookieJarLike } from "./types";
+import type { AptosClientRequest, CookieJarLike } from "./types.js";
 
 /**
  * Build a `URL` from a base string and optional query parameters.
