@@ -1,6 +1,7 @@
 {
   "display": "Client Implementation",
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
     "declaration": true,
     "declarationMap": true,
     "esModuleInterop": true,
