@@ -1,5 +1,6 @@
 {
   "name": "@aptos-labs/aptos-client",
+  "type": "module",
   "description": "Client package for accessing the Aptos network API.",
   "packageManager": "pnpm@10.30.1",
   "license": "Apache-2.0",
@@ -9,65 +10,38 @@
   "exports": {
     ".": {
       "deno": {
-        "types": "./dist/fetch/index.fetch.d.mts",
-        "import": "./dist/fetch/index.fetch.mjs"
+        "types": "./dist/fetch/index.fetch.d.ts",
+        "default": "./dist/fetch/index.fetch.js"
       },
       "bun": {
-        "types": "./dist/fetch/index.fetch.d.mts",
-        "import": "./dist/fetch/index.fetch.mjs"
+        "types": "./dist/fetch/index.fetch.d.ts",
+        "default": "./dist/fetch/index.fetch.js"
       },
       "browser": {
-        "import": {
-          "types": "./dist/browser/index.browser.d.mts",
-          "default": "./dist/browser/index.browser.mjs"
-        },
-        "require": {
-          "types": "./dist/browser/index.browser.d.ts",
-          "default": "./dist/browser/index.browser.js"
-        }
+        "types": "./dist/browser/index.browser.d.ts",
+        "default": "./dist/browser/index.browser.js"
       },
       "react-native": {
-        "import": {
-          "types": "./dist/fetch/index.fetch.d.mts",
-          "default": "./dist/fetch/index.fetch.mjs"
-        },
-        "require": {
-          "types": "./dist/fetch/index.fetch.d.ts",
-          "default": "./dist/fetch/index.fetch.js"
-        }
+        "types": "./dist/fetch/index.fetch.d.ts",
+        "default": "./dist/fetch/index.fetch.js"
       },
       "node": {
-        "import": {
-          "types": "./dist/node/index.node.d.mts",
-          "default": "./dist/node/index.node.mjs"
-        },
-        "require": {
-          "types": "./dist/node/index.node.d.ts",
-          "default": "./dist/node/index.node.js"
-        }
+        "types": "./dist/node/index.node.d.ts",
+        "default": "./dist/node/index.node.js"
       },
       "default": {
-        "import": {
-          "types": "./dist/fetch/index.fetch.d.mts",
-          "default": "./dist/fetch/index.fetch.mjs"
-        },
-        "require": {
-          "types": "./dist/fetch/index.fetch.d.ts",
-          "default": "./dist/fetch/index.fetch.js"
-        }
+        "types": "./dist/fetch/index.fetch.d.ts",
+        "default": "./dist/fetch/index.fetch.js"
       }
     }
   },
   "browser": {
-    "./dist/node/index.node.mjs": "./dist/browser/index.browser.mjs",
     "./dist/node/index.node.js": "./dist/browser/index.browser.js"
   },
   "react-native": {
-    "./dist/node/index.node.mjs": "./dist/fetch/index.fetch.mjs",
     "./dist/node/index.node.js": "./dist/fetch/index.fetch.js"
   },
   "main": "./dist/node/index.node.js",
-  "module": "./dist/node/index.node.mjs",
   "sideEffects": false,
   "types": "./dist/node/index.node.d.ts",
   "files": [
@@ -122,5 +96,5 @@
     "picomatch": "^4.0.4",
     "brace-expansion": "2.0.3"
   },
-  "version": "3.0.2"
+  "version": "4.0.0"
 }
