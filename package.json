@@ -77,13 +77,8 @@
     "Aptos Labs",
     "Aptos SDK"
   ],
-  "peerDependencies": {
+  "dependencies": {
     "undici": "^7.24.1"
-  },
-  "peerDependenciesMeta": {
-    "undici": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.6",
@@ -91,7 +86,6 @@
     "tsx": "^4.21.0",
     "esbuild": "^0.27.4",
     "typescript": "^6.0.2",
-    "undici": "^7.24.1",
     "picomatch": "^4.0.4",
     "brace-expansion": "2.0.3"
   },
