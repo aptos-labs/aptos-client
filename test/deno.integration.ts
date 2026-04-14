@@ -10,7 +10,7 @@ import { assert, assertEquals } from "jsr:@std/assert";
 
 // Import the built fetch client
 // deno-lint-ignore no-explicit-any
-const { default: _aptosClient, jsonRequest, bcsRequest } = (await import("../dist/fetch/index.fetch.mjs")) as any;
+const { default: _aptosClient, jsonRequest, bcsRequest } = (await import("../dist/index.fetch.js")) as any;
 
 let h1Url: string;
 let h2Url: string;

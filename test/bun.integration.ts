@@ -10,7 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { type Subprocess, spawn } from "bun";
 
 // Import the built fetch client
-const { default: _aptosClient, jsonRequest, bcsRequest } = await import("../dist/fetch/index.fetch.mjs");
+const { default: _aptosClient, jsonRequest, bcsRequest } = await import("../dist/index.fetch.js");
 
 let h1Url: string;
 let h2Url: string;
