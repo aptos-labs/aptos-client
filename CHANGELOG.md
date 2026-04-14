@@ -5,6 +5,8 @@ adheres to the format set out by [Keep a Changelog](https://keepachangelog.com/e
 
 # Unreleased
 
+# Released
+
 # 4.0.0
 
 ### Breaking Changes
@@ -30,7 +32,6 @@ adheres to the format set out by [Keep a Changelog](https://keepachangelog.com/e
 
 ### Fixed
 
-- Fixes the breaking change between 2.x and 3.x around headers. This is a breaking change from 3.0.0 and 3.0.1, but no downstream dependencies were using it.
 - Export `AptosClientRequest`, `AptosClientResponse`, and `CookieJarLike` types from all entry points.
 - Export `Cookie` type from Node and fetch entry points.
 
