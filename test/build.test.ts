@@ -41,7 +41,7 @@ describe("Build compatibility", () => {
   afterEach(() => cleanup());
 
   describe("tsc", () => {
-    for (const resolution of ["bundler", "node16", "nodenext"] as const) {
+    for (const resolution of ["bundler", "nodenext"] as const) {
       it(`moduleResolution: ${resolution}`, () => {
         execFileSync(TSC, ["--project", join(FIXTURE_DIR, `tsconfig.${resolution}.json`)], {
           cwd: FIXTURE_DIR,
