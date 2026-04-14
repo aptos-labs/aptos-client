@@ -16,6 +16,8 @@
 import { applyJsonContentType, buildUrl, headersToRecord, parseJsonSafely, serializeBody } from "./shared.js";
 import type { AptosClientRequest, AptosClientResponse } from "./types.js";
 
+export type { AptosClientRequest, AptosClientResponse, CookieJarLike } from "./types.js";
+
 let http2Warned = false;
 
 /**

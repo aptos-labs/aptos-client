@@ -23,7 +23,7 @@ import {
 import type { AptosClientRequest, AptosClientResponse, CookieJarLike } from "./types.js";
 
 export { CookieJar } from "./cookieJar.js";
-export type { CookieJarLike } from "./types.js";
+export type { AptosClientRequest, AptosClientResponse, CookieJarLike } from "./types.js";
 
 const defaultCookieJar = new CookieJar();
 
