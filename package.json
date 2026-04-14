@@ -46,7 +46,8 @@
   "sideEffects": false,
   "types": "./dist/index.node.d.ts",
   "files": [
-    "./dist/"
+    "dist",
+    "src"
   ],
   "scripts": {
     "build:clean": "rm -rf dist",
