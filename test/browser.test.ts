@@ -7,8 +7,8 @@
 
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
-import aptosClient, { bcsRequest, jsonRequest } from "../src/index.browser.ts";
-import { startH1Server, startH2Server, type TestServer } from "./server.ts";
+import aptosClient, { bcsRequest, jsonRequest } from "../src/index.browser.js";
+import { startH1Server, startH2Server, type TestServer } from "./server.js";
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 

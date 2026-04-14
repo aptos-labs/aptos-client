@@ -13,7 +13,6 @@
   ],
   "compilerOptions": {
     "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "allowImportingTsExtensions": true
+    "noUnusedParameters": false
   }
 }

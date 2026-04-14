@@ -23,12 +23,6 @@ npm install @aptos-labs/aptos-client
 pnpm add @aptos-labs/aptos-client
 ```
 
-`undici` is an optional peer dependency — only needed in Node.js:
-
-```bash
-npm install undici
-```
-
 ## Usage
 
 ```ts
@@ -63,6 +57,8 @@ The package uses [conditional exports](https://nodejs.org/api/packages.html#cond
 | `react-native` | `index.fetch.ts` | Automatic (OkHttp / NSURLSession) | Platform negotiates HTTP/2 via ALPN |
 | `deno` | `index.fetch.ts` | Automatic | — |
 | `bun` | `index.fetch.ts` | Automatic | — |
+| `workerd` | `index.fetch.ts` | Automatic | Cloudflare Workers |
+| `edge-light` | `index.fetch.ts` | Automatic | Vercel Edge Functions |
 | `default` | `index.fetch.ts` | Depends on runtime | Fallback for unknown runtimes |
 
 ## Types
@@ -86,7 +82,7 @@ type AptosClientResponse<Res> = {
   config?: any;
   request?: any;
   response?: any;
-  headers?: any;
+  headers?: Record<string, string | string[]>;
 };
 ```
 

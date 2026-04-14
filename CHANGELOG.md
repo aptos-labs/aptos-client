@@ -5,9 +5,41 @@ adheres to the format set out by [Keep a Changelog](https://keepachangelog.com/e
 
 # Unreleased
 
-### Fixes
+# Released
 
-- Fixes the breaking change between 2.x and 3.x around headers.  This is a breaking change from 3.0.0 and 3.0.1, but no downstream dependencies were using it.
+# 4.0.0
+
+### Breaking Changes
+
+- **ESM-only** — CJS `require()` is no longer supported. Consumers must use `import`.
+- **TypeScript 6.0** — Upgraded from TypeScript 5.x to 6.0.2.
+
+### Changed
+
+- **NodeNext module resolution** — Source uses `module: "nodenext"` with explicit `.js` extensions on all relative imports. The published package is fully compatible with `bundler` and `nodenext` consumers.
+- **Build with `tsc` instead of `tsup`** — Plain `tsc` compiles directly to a flat `dist/` directory. No bundler needed.
+- **`undici` is now a regular dependency** — Previously an optional peer dependency. The Node.js entry point always imports it, so making it a regular dependency prevents confusing `ERR_MODULE_NOT_FOUND` errors. Browser, Deno, Bun, and React Native entry points never load it.
+- **Flat `dist/` layout** — Output files moved from `dist/node/`, `dist/browser/`, `dist/fetch/` to a single `dist/` directory.
+- **Added `workerd` and `edge-light` export conditions** — Cloudflare Workers and Vercel Edge Functions now resolve to the fetch-based entry point automatically.
+- **Removed legacy `main`, `browser`, and `react-native` top-level fields** — The `exports` map is the sole entry point resolution mechanism. Only `types` is kept as a TypeScript fallback.
+
+### Removed
+
+- **CJS output** — No more `.cjs` or dual `.mjs`/`.js` outputs. All output is ESM `.js`.
+- **`tsup` dependency** — Replaced by plain `tsc`. Removes 78 transitive dependencies.
+- **`node16` build test** — Superseded by the `nodenext` consumer test.
+- **Unused `picomatch` and `brace-expansion` devDependencies.**
+
+### Fixed
+
+- Export `AptosClientRequest`, `AptosClientResponse`, and `CookieJarLike` types from all entry points.
+- Export `Cookie` type from Node and fetch entry points.
+
+# 3.0.2
+
+### Fixed
+
+- Return response headers as plain `Record<string, string | string[]>` objects instead of `Headers` instances, restoring backward compatibility with v2 consumers that access headers via bracket notation.
 
 # 3.0.1
 

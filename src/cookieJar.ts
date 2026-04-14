@@ -1,5 +1,5 @@
 /** A parsed cookie with optional attributes. */
-interface Cookie {
+export interface Cookie {
   name: string;
   value: string;
   expires?: Date;

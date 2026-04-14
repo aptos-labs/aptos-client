@@ -2,7 +2,7 @@
  * Consumer fixture — simulates an ESM Node.js project importing this package.
  * Used by the build compatibility tests (tsc with various moduleResolution settings, esbuild node).
  */
-import type { CookieJarLike } from "@aptos-labs/aptos-client";
+import type { AptosClientRequest, AptosClientResponse, CookieJarLike } from "@aptos-labs/aptos-client";
 import aptosClient, { bcsRequest, CookieJar, jsonRequest } from "@aptos-labs/aptos-client";
 
 async function _verify() {
@@ -34,4 +34,8 @@ async function _verify() {
 
   // Per-request cookie jar
   await aptosClient({ url: "https://example.com", method: "GET", cookieJar: jar });
+
+  // Verify public types are importable
+  const _req: AptosClientRequest = { url: "https://example.com", method: "GET" };
+  const _res: AptosClientResponse<{ chain_id: number }> = res;
 }

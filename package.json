@@ -1,5 +1,6 @@
 {
   "name": "@aptos-labs/aptos-client",
+  "type": "module",
   "description": "Client package for accessing the Aptos network API.",
   "packageManager": "pnpm@10.30.1",
   "license": "Apache-2.0",
@@ -9,73 +10,48 @@
   "exports": {
     ".": {
       "deno": {
-        "types": "./dist/fetch/index.fetch.d.mts",
-        "import": "./dist/fetch/index.fetch.mjs"
+        "types": "./dist/index.fetch.d.ts",
+        "default": "./dist/index.fetch.js"
       },
       "bun": {
-        "types": "./dist/fetch/index.fetch.d.mts",
-        "import": "./dist/fetch/index.fetch.mjs"
+        "types": "./dist/index.fetch.d.ts",
+        "default": "./dist/index.fetch.js"
+      },
+      "workerd": {
+        "types": "./dist/index.fetch.d.ts",
+        "default": "./dist/index.fetch.js"
+      },
+      "edge-light": {
+        "types": "./dist/index.fetch.d.ts",
+        "default": "./dist/index.fetch.js"
       },
       "browser": {
-        "import": {
-          "types": "./dist/browser/index.browser.d.mts",
-          "default": "./dist/browser/index.browser.mjs"
-        },
-        "require": {
-          "types": "./dist/browser/index.browser.d.ts",
-          "default": "./dist/browser/index.browser.js"
-        }
+        "types": "./dist/index.browser.d.ts",
+        "default": "./dist/index.browser.js"
       },
       "react-native": {
-        "import": {
-          "types": "./dist/fetch/index.fetch.d.mts",
-          "default": "./dist/fetch/index.fetch.mjs"
-        },
-        "require": {
-          "types": "./dist/fetch/index.fetch.d.ts",
-          "default": "./dist/fetch/index.fetch.js"
-        }
+        "types": "./dist/index.fetch.d.ts",
+        "default": "./dist/index.fetch.js"
       },
       "node": {
-        "import": {
-          "types": "./dist/node/index.node.d.mts",
-          "default": "./dist/node/index.node.mjs"
-        },
-        "require": {
-          "types": "./dist/node/index.node.d.ts",
-          "default": "./dist/node/index.node.js"
-        }
+        "types": "./dist/index.node.d.ts",
+        "default": "./dist/index.node.js"
       },
       "default": {
-        "import": {
-          "types": "./dist/fetch/index.fetch.d.mts",
-          "default": "./dist/fetch/index.fetch.mjs"
-        },
-        "require": {
-          "types": "./dist/fetch/index.fetch.d.ts",
-          "default": "./dist/fetch/index.fetch.js"
-        }
+        "types": "./dist/index.fetch.d.ts",
+        "default": "./dist/index.fetch.js"
       }
     }
   },
-  "browser": {
-    "./dist/node/index.node.mjs": "./dist/browser/index.browser.mjs",
-    "./dist/node/index.node.js": "./dist/browser/index.browser.js"
-  },
-  "react-native": {
-    "./dist/node/index.node.mjs": "./dist/fetch/index.fetch.mjs",
-    "./dist/node/index.node.js": "./dist/fetch/index.fetch.js"
-  },
-  "main": "./dist/node/index.node.js",
-  "module": "./dist/node/index.node.mjs",
   "sideEffects": false,
-  "types": "./dist/node/index.node.d.ts",
+  "types": "./dist/index.node.d.ts",
   "files": [
-    "./dist/"
+    "dist",
+    "src"
   ],
   "scripts": {
     "build:clean": "rm -rf dist",
-    "build": "pnpm build:clean && tsup",
+    "build": "pnpm build:clean && tsc --project tsconfig.build.json",
     "test": "tsx --test --test-force-exit test/node.test.ts test/fetch.test.ts test/browser.test.ts test/cookieJar.test.ts",
     "test:node": "tsx --test --test-force-exit test/node.test.ts",
     "test:fetch": "tsx --test --test-force-exit test/fetch.test.ts",
@@ -103,24 +79,15 @@
     "Aptos Labs",
     "Aptos SDK"
   ],
-  "peerDependencies": {
-    "undici": "^7.24.1"
-  },
-  "peerDependenciesMeta": {
-    "undici": {
-      "optional": true
-    }
+  "dependencies": {
+    "undici": "^7.25.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.6",
-    "@types/node": "^22.19.15",
+    "@types/node": "^22.19.17",
+    "esbuild": "^0.28.0",
     "tsx": "^4.21.0",
-    "esbuild": "^0.27.4",
-    "tsup": "^8.5.1",
-    "typescript": "^5.9.3",
-    "undici": "^7.24.1",
-    "picomatch": "^4.0.4",
-    "brace-expansion": "2.0.3"
+    "typescript": "^6.0.2"
   },
-  "version": "3.0.2"
+  "version": "4.0.0"
 }

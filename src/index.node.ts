@@ -10,7 +10,7 @@
  * @module index.node
  */
 import { Agent } from "undici";
-import { CookieJar } from "./cookieJar";
+import { CookieJar } from "./cookieJar.js";
 import {
   applyCookiesToHeaders,
   applyJsonContentType,
@@ -19,11 +19,12 @@ import {
   parseJsonSafely,
   serializeBody,
   storeResponseCookies,
-} from "./shared";
-import type { AptosClientRequest, AptosClientResponse, CookieJarLike } from "./types";
+} from "./shared.js";
+import type { AptosClientRequest, AptosClientResponse, CookieJarLike } from "./types.js";
 
-export { CookieJar } from "./cookieJar";
-export type { CookieJarLike } from "./types";
+export type { Cookie } from "./cookieJar.js";
+export { CookieJar } from "./cookieJar.js";
+export type { AptosClientRequest, AptosClientResponse, CookieJarLike } from "./types.js";
 
 const defaultCookieJar = new CookieJar();
 

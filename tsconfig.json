@@ -3,19 +3,15 @@
   "compilerOptions": {
     "declaration": true,
     "declarationMap": true,
-    "esModuleInterop": true,
+    "sourceMap": true,
     "lib": ["ES2022", "DOM"],
-    "module": "ES2022",
-    "moduleResolution": "bundler",
-    "isolatedModules": true,
-    "noImplicitAny": true,
+    "module": "nodenext",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "outDir": "./dist",
     "skipLibCheck": true,
     "strict": true,
-    "target": "ES2022",
-    "pretty": true
+    "target": "ES2022"
   },
   "include": ["src"]
 }
