@@ -8,9 +8,7 @@
     "module": "nodenext",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "ignoreDeprecations": "6.0",
     "outDir": "./dist",
-    "rootDir": "./src",
     "skipLibCheck": true,
     "strict": true,
     "target": "ES2022"

@@ -50,7 +50,7 @@
   ],
   "scripts": {
     "build:clean": "rm -rf dist",
-    "build": "pnpm build:clean && tsc",
+    "build": "pnpm build:clean && tsc --project tsconfig.build.json",
     "test": "tsx --test --test-force-exit test/node.test.ts test/fetch.test.ts test/browser.test.ts test/cookieJar.test.ts",
     "test:node": "tsx --test --test-force-exit test/node.test.ts",
     "test:fetch": "tsx --test --test-force-exit test/fetch.test.ts",
