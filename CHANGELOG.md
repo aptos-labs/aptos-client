@@ -14,7 +14,7 @@ adheres to the format set out by [Keep a Changelog](https://keepachangelog.com/e
 
 ### Changed
 
-- **NodeNext module resolution** — Source uses `module: "nodenext"` with explicit `.js` extensions on all relative imports. The published package is fully compatible with `bundler`, `node16`, and `nodenext` consumers.
+- **NodeNext module resolution** — Source uses `module: "nodenext"` with explicit `.js` extensions on all relative imports. The published package is fully compatible with `bundler` and `nodenext` consumers.
 - **Build with `tsc` instead of `tsup`** — Plain `tsc` compiles directly to a flat `dist/` directory. No bundler needed.
 - **`undici` is now a regular dependency** — Previously an optional peer dependency. The Node.js entry point always imports it, so making it a regular dependency prevents confusing `ERR_MODULE_NOT_FOUND` errors. Browser, Deno, Bun, and React Native entry points never load it.
 - **Flat `dist/` layout** — Output files moved from `dist/node/`, `dist/browser/`, `dist/fetch/` to a single `dist/` directory.
