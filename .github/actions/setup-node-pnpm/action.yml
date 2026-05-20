@@ -14,7 +14,7 @@ inputs:
   node-version:
     description: Node.js version to use
     required: false
-    default: "22"
+    default: "22.22.3"
   registry-url:
     description: npm registry URL (set for publishing workflows)
     required: false
