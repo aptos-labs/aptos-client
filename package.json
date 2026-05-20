@@ -68,7 +68,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/aptos-labs/aptos-client.git"
+    "url": "git+https://github.com/aptos-labs/aptos-client.git"
   },
   "homepage": "https://github.com/aptos-labs/aptos-client",
   "bugs": {
