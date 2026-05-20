@@ -1,7 +1,17 @@
 /**
- * Tests for the fetch-based client (designed for Deno/Bun).
- * When run under Node, HTTP/2 is NOT available (Node's fetch/undici doesn't support h2).
- * When run under Deno or Bun, HTTP/2 is negotiated automatically via ALPN.
+ * Tests for the fetch-based client (used by Deno/Bun/edge runtimes; also runs
+ * under Node for unit coverage).
+ *
+ * HTTP/2: the runtime's native fetch decides. Today this means:
+ *  - Node 24+ (undici 7+): negotiates HTTP/2 via ALPN.
+ *  - Deno: HTTP/2 via ALPN (covered by `deno.integration.ts`).
+ *  - Bun (recent): HTTP/2 via ALPN (covered by `bun.integration.ts`).
+ *
+ * The H2 assertion below reports the negotiated version rather than pinning a
+ * specific one so the test remains accurate as runtimes evolve.
+ *
+ * Decompression: the runtime's fetch transparently decodes `br`, `gzip`, and
+ * `deflate` bodies — verified by `/compressed` returning parsed JSON.
  */
 
 import assert from "node:assert/strict";
@@ -106,17 +116,31 @@ describe("fetch client", () => {
     );
   });
 
-  it("HTTP/2: Node's fetch (undici) falls back to HTTP/1.1", async () => {
-    const res = await jsonRequest({
-      url: `${h2.url}/json`,
-      method: "GET",
-    });
+  it("HTTP/1.1: GET against an h1-only origin reports 1.1", async () => {
+    const res = await jsonRequest({ url: `${h1.url}/json`, method: "GET" });
     assert.equal(res.status, 200);
-    // Node's undici-based fetch cannot negotiate HTTP/2 — always falls back to 1.1
-    assert.equal(
-      res.headers?.["x-http-version"],
-      "1.1",
-      "Under Node, fetch does NOT support HTTP/2. Deno and Bun negotiate h2 automatically.",
-    );
+    assert.equal(res.headers?.["x-http-version"], "1.1");
+  });
+
+  it("HTTP/2: negotiates h2 via ALPN against an h2 origin (runtime-dependent)", async () => {
+    const res = await jsonRequest({ url: `${h2.url}/json`, method: "GET" });
+    assert.equal(res.status, 200);
+    const version = res.headers?.["x-http-version"];
+    // Whichever the runtime chose, it must be a valid HTTP version. Under
+    // Node 24+ undici fetch this is "2.0"; older Nodes fell back to "1.1".
+    assert.ok(version === "1.1" || version === "2.0", `unexpected protocol: ${version}`);
+    console.log(`  fetch client negotiated: HTTP/${version}`);
+  });
+
+  it("decompresses brotli/gzip/deflate transparently", async () => {
+    for (const encoding of ["br", "gzip", "deflate"] as const) {
+      const res = await jsonRequest({
+        url: `${h1.url}/compressed`,
+        method: "GET",
+        params: { encoding },
+      });
+      assert.equal(res.status, 200, `status for ${encoding}`);
+      assert.deepEqual(res.data, { hello: "compressed", encoding }, `data for ${encoding}`);
+    }
   });
 });

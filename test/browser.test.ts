@@ -1,8 +1,12 @@
 /**
  * Tests for the browser client (fetch-based, no cookie jar).
- * HTTP/2: In real browsers, HTTP/2 is negotiated automatically by the browser engine.
- * When tested under Node, HTTP/2 is NOT available (same undici limitation as fetch client).
- * The browser client has no cookie jar — cookies are managed by the browser itself.
+ *
+ * In real browsers, HTTP/2 is negotiated by the browser engine and bodies are
+ * decompressed transparently. When tested under Node we exercise the same code
+ * paths through Node's fetch; whatever Node's fetch negotiates is what we get
+ * (Node 24+ undici now supports H2 via ALPN).
+ *
+ * The browser client has no cookie jar — cookies are managed by the browser.
  */
 
 import assert from "node:assert/strict";
@@ -108,16 +112,29 @@ describe("browser client", () => {
     );
   });
 
-  it("HTTP/2: falls back to HTTP/1.1 under Node (browser would negotiate h2 natively)", async () => {
-    const res = await jsonRequest({
-      url: `${h2.url}/json`,
-      method: "GET",
-    });
+  it("HTTP/1.1: GET against an h1-only origin reports 1.1", async () => {
+    const res = await jsonRequest({ url: `${h1.url}/json`, method: "GET" });
     assert.equal(res.status, 200);
-    assert.equal(
-      res.headers?.["x-http-version"],
-      "1.1",
-      "Under Node, browser client falls back to 1.1. In a real browser, h2 is negotiated by the engine.",
-    );
+    assert.equal(res.headers?.["x-http-version"], "1.1");
+  });
+
+  it("HTTP/2: negotiates h2 via ALPN when the runtime supports it", async () => {
+    const res = await jsonRequest({ url: `${h2.url}/json`, method: "GET" });
+    assert.equal(res.status, 200);
+    const version = res.headers?.["x-http-version"];
+    assert.ok(version === "1.1" || version === "2.0", `unexpected protocol: ${version}`);
+    console.log(`  browser client negotiated: HTTP/${version}`);
+  });
+
+  it("decompresses brotli/gzip/deflate transparently", async () => {
+    for (const encoding of ["br", "gzip", "deflate"] as const) {
+      const res = await jsonRequest({
+        url: `${h1.url}/compressed`,
+        method: "GET",
+        params: { encoding },
+      });
+      assert.equal(res.status, 200, `status for ${encoding}`);
+      assert.deepEqual(res.data, { hello: "compressed", encoding }, `data for ${encoding}`);
+    }
   });
 });

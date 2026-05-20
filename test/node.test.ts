@@ -1,6 +1,7 @@
 /**
- * Tests for the Node.js client (undici-based).
- * HTTP/2: SUPPORTED — undici Agent with allowH2: true negotiates h2 via ALPN.
+ * Tests for the Node.js client (got-based).
+ * HTTP/2: SUPPORTED — got negotiates h2 via ALPN when `http2: true`.
+ * Decompression: SUPPORTED — got transparently decodes br / gzip / deflate.
  */
 
 import assert from "node:assert/strict";
@@ -11,7 +12,7 @@ import { startH1Server, startH2Server, type TestServer } from "./server.js";
 // Allow self-signed certs for h2 tests
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
-describe("node client (undici)", () => {
+describe("node client (got)", () => {
   let h1: TestServer;
   let h2: TestServer;
 
@@ -65,7 +66,6 @@ describe("node client (undici)", () => {
   it("BCS request returns binary data", async () => {
     const res = await bcsRequest({ url: `${h1.url}/bcs`, method: "GET" });
     assert.equal(res.status, 200);
-    // undici returns ArrayBuffer from res.arrayBuffer()
     assert.ok(res.data instanceof ArrayBuffer, "bcsRequest should return ArrayBuffer");
     const bytes = new Uint8Array(res.data as ArrayBuffer);
     assert.deepEqual([...bytes], [0xde, 0xad, 0xbe, 0xef]);
@@ -113,7 +113,7 @@ describe("node client (undici)", () => {
       http2: true,
     });
     assert.equal(res.status, 200);
-    assert.equal(res.headers?.["x-http-version"], "2.0", "undici with allowH2 should negotiate HTTP/2 via ALPN");
+    assert.equal(res.headers?.["x-http-version"], "2.0", "got with http2: true should negotiate HTTP/2 via ALPN");
   });
 
   it("HTTP/2: falls back to HTTP/1.1 when http2: false", async () => {
@@ -124,6 +124,77 @@ describe("node client (undici)", () => {
     });
     assert.equal(res.status, 200);
     assert.equal(res.headers?.["x-http-version"], "1.1");
+  });
+
+  it("HTTP/1.1: GET against an h1-only origin reports 1.1", async () => {
+    const res = await jsonRequest({ url: `${h1.url}/json`, method: "GET" });
+    assert.equal(res.status, 200);
+    assert.equal(res.headers?.["x-http-version"], "1.1");
+  });
+
+  // Bug-2 regression: in v3.x (undici-based), fullnode brotli responses
+  // surfaced as binary-prefixed strings that JSON.parse couldn't handle —
+  // the `fetch + custom dispatcher` combination silently bypassed undici's
+  // decompression on both H1 and H2. Returning to got (which decompresses
+  // in its own body pipeline, independent of the transport) restores the
+  // v2-era behavior where compressed bodies just work.
+  it("decompresses brotli on h2 and yields parsed JSON", async () => {
+    const res = await jsonRequest({
+      url: `${h2.url}/compressed`,
+      method: "GET",
+      params: { encoding: "br" },
+      http2: true,
+    });
+    assert.equal(res.status, 200);
+    assert.equal(typeof res.data, "object", `expected parsed object, got ${typeof res.data}`);
+    assert.deepEqual(res.data, { hello: "compressed", encoding: "br" });
+    // The server saw a compression-allowing accept-encoding, so the wire
+    // body was compressed, and our pipeline decoded it.
+    assert.ok(
+      String(res.headers?.["x-accept-encoding-seen"] ?? "").includes("br"),
+      "client should advertise brotli support by default",
+    );
+    // The response should not still claim to be compressed after decoding.
+    assert.equal(res.headers?.["content-encoding"], undefined);
+  });
+
+  it("decompresses br / gzip / deflate on HTTP/1.1", async () => {
+    for (const encoding of ["br", "gzip", "deflate"] as const) {
+      const res = await jsonRequest({
+        url: `${h1.url}/compressed`,
+        method: "GET",
+        params: { encoding },
+      });
+      assert.equal(res.status, 200, `status for ${encoding}`);
+      assert.deepEqual(res.data, { hello: "compressed", encoding }, `data for ${encoding}`);
+      assert.equal(res.headers?.["content-encoding"], undefined, `content-encoding stripped for ${encoding}`);
+    }
+  });
+
+  it("BCS path also decompresses the body before returning bytes", async () => {
+    const res = await bcsRequest({
+      url: `${h1.url}/compressed`,
+      method: "GET",
+      params: { encoding: "br" },
+    });
+    assert.equal(res.status, 200);
+    // Decoded bytes should be the original JSON, not the brotli stream.
+    const text = new TextDecoder().decode(new Uint8Array(res.data as ArrayBuffer));
+    assert.equal(text, JSON.stringify({ hello: "compressed", encoding: "br" }));
+  });
+
+  it("caller-provided accept-encoding overrides the default", async () => {
+    const res = await jsonRequest({
+      url: `${h1.url}/compressed`,
+      method: "GET",
+      params: { encoding: "gzip" },
+      headers: { "accept-encoding": "identity" },
+    });
+    assert.equal(res.status, 200);
+    assert.equal(res.headers?.["x-accept-encoding-seen"], "identity");
+    // Server should have skipped compression entirely.
+    assert.equal(res.headers?.["content-encoding"], undefined);
+    assert.deepEqual(res.data, { hello: "compressed", encoding: "gzip" });
   });
 
   it("HTTP/2: BCS over h2", async () => {

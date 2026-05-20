@@ -60,7 +60,7 @@ describe("Build compatibility", () => {
           join(FIXTURE_DIR, "consumer.ts"),
           "--bundle",
           "--platform=node",
-          "--external:undici",
+          "--external:got",
           `--outfile=${join(FIXTURE_DIR, "out.js")}`,
         ],
         { cwd: ROOT, stdio: "pipe", timeout: 30_000 },

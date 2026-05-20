@@ -1,36 +1,38 @@
 /**
- * Node.js HTTP client backed by {@link https://undici.nodejs.org | undici}.
+ * Node.js HTTP client backed by {@link https://github.com/sindresorhus/got | got}.
  *
  * @remarks
  * This entry point is selected when the package is imported from Node.js
- * (via the `"node"` export condition). It uses undici's `Agent` with
- * configurable HTTP/2 support (`allowH2`). Agents are cached per origin
- * so connections are reused across requests to the same host.
+ * (via the `"node"` export condition). It uses {@link got} for transport,
+ * which provides:
+ *
+ *  - HTTP/2 negotiation via `http2-wrapper` (`http2: true`).
+ *  - Transparent decompression of `br`, `gzip`, and `deflate` response bodies
+ *    on both HTTP/1.1 and HTTP/2 (`decompress: true`, the default).
+ *  - Built-in connection pooling — we don't manage our own dispatcher cache.
+ *
+ * Historical note: v3 of this package replaced `got` with `undici`, but the
+ * `fetch + custom dispatcher` combination silently dropped response headers
+ * (including `set-cookie`) and failed to decompress responses on H2 (and
+ * via the fetch wrapper on H1 too). v4 returns to `got` because its body
+ * pipeline handles decompression independent of the transport, which is the
+ * only shape that works reliably with the Aptos fullnode (brotli) and
+ * indexer (gzip) endpoints.
  *
  * @module index.node
  */
-import { Agent } from "undici";
+import { type IncomingMessage, STATUS_CODES } from "node:http";
+import got, { HTTPError, RequestError } from "got";
 import { CookieJar } from "./cookieJar.js";
-import {
-  applyCookiesToHeaders,
-  applyJsonContentType,
-  buildUrl,
-  headersToRecord,
-  parseJsonSafely,
-  serializeBody,
-  storeResponseCookies,
-} from "./shared.js";
+import { buildUrl, serializeBody } from "./shared.js";
 import type { AptosClientRequest, AptosClientResponse, CookieJarLike } from "./types.js";
 
 export type { Cookie } from "./cookieJar.js";
 export { CookieJar } from "./cookieJar.js";
 export type { AptosClientRequest, AptosClientResponse, CookieJarLike } from "./types.js";
 
+const textDecoder = new TextDecoder("utf-8");
 const defaultCookieJar = new CookieJar();
-
-/** One dispatcher per origin + HTTP/2 mode for connection reuse. */
-const dispatcherCache = new Map<string, Agent>();
-const MAX_DISPATCHERS = 50;
 
 /**
  * Send a JSON request to an Aptos API endpoint.
@@ -98,92 +100,173 @@ async function doRequest<Res>(
   }
 
   const requestUrl = buildUrl(url, params);
-  const requestHeaders = buildHeaders(requestUrl, headers, jar);
-  const dispatcher = getDispatcher(requestUrl.origin, http2);
+  const requestHeaders = buildHeaders(requestUrl, headers, body, jar);
+  // `serializeBody` returns string | Uint8Array | undefined; got accepts both as `body`.
+  const serialized = serializeBody(body) as string | Uint8Array | undefined;
 
-  const init: RequestInit & { dispatcher?: Agent } = {
-    method,
-    headers: requestHeaders,
-    dispatcher,
-  };
-
-  const serialized = serializeBody(body);
-  if (serialized !== undefined) {
-    init.body = serialized;
-    applyJsonContentType(body, requestHeaders);
+  let response: {
+    body: Uint8Array<ArrayBuffer>;
+    statusCode: number;
+  } & IncomingMessage;
+  try {
+    response = await got(requestUrl, {
+      method,
+      headers: requestHeaders,
+      body: serialized,
+      http2,
+      // Don't throw on 4xx/5xx — callers (e.g., the TS SDK) inspect the
+      // status code and handle errors themselves. Matches v2 behavior.
+      throwHttpErrors: false,
+      // Disable retries; SDK callers manage their own retry policy.
+      retry: { limit: 0 },
+      // Body comes back as a Uint8Array; we decode JSON / hand back ArrayBuffer
+      // ourselves so the empty-body and BCS cases stay consistent.
+      responseType: "buffer",
+      // `decompress: true` is the default — listed explicitly to make the
+      // intent (transparent br/gzip/deflate decoding) visible.
+      decompress: true,
+      // got's H2 path (via http2-wrapper) sets its own TLS context and does
+      // NOT inherit `NODE_TLS_REJECT_UNAUTHORIZED` from the env. Pass it
+      // through explicitly, so the documented Node env var works as expected.
+      https: {
+        rejectUnauthorized: process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0",
+      },
+    });
+  } catch (err) {
+    // got throws for transport-level failures (DNS, ECONNREFUSED, parse errors).
+    // HTTP 4xx/5xx do NOT throw thanks to throwHttpErrors: false. We preserve
+    // a v2-compatible shape: if there's an attached response, surface it as a
+    // normal AptosClientResponse so callers can read .status.
+    if ((err instanceof HTTPError || err instanceof RequestError) && err.response) {
+      response = err.response;
+    } else {
+      throw err;
+    }
   }
 
-  const res = await fetch(requestUrl, init);
+  storeResponseCookies(requestUrl, response.headers, jar);
 
-  storeResponseCookies(requestUrl, res.headers, jar);
+  // got's `responseType: "buffer"` returns a Uint8Array (not a Node Buffer)
+  // in v15+.
+  const raw = response.body;
 
-  const data = mode === "json" ? await parseJsonSafely(res) : await res.arrayBuffer();
+  // TODO: at some point provide better type guarantees, since there is some legacy behavior in here
+  // biome-ignore lint/suspicious/noExplicitAny: legacy behavior, union of multiple body shapes
+  let data: any;
+  if (mode === "arrayBuffer") {
+    // Slice out a fresh ArrayBuffer that matches the body length exactly.
+    data = response.body.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength);
+  } else if (response.statusCode === 204 || response.statusCode === 205 || response.body.byteLength === 0) {
+    data = null;
+  } else {
+    const text = textDecoder.decode(response.body);
+    try {
+      data = JSON.parse(text);
+    } catch {
+      // Backward compat: return raw text so callers can inspect non-JSON bodies.
+      data = text;
+    }
+  }
 
   return {
-    status: res.status,
-    statusText: res.statusText,
+    status: response.statusCode,
+    statusText: response.statusMessage ?? STATUS_CODES[response.statusCode] ?? "",
     data,
-    config: { ...init, headers: headersToRecord(requestHeaders) },
+    config: {
+      method,
+      headers: requestHeaders,
+      body: serialized,
+    },
     request: {
       url: requestUrl.toString(),
       method,
     },
-    response: res,
-    headers: headersToRecord(res.headers),
+    response,
+    headers: normalizeHeaders(response.headers),
   };
 }
 
 /**
- * Return a cached undici `Agent` for the given origin, creating one if needed.
+ * Build the outgoing header record: caller-supplied headers, jar cookies,
+ * and a default JSON `content-type` for non-binary bodies.
  *
- * @param origin - URL origin (scheme + host + port).
- * @param http2 - Whether to enable HTTP/2 via ALPN (`allowH2`).
+ * @remarks
+ * Unlike the v3 (undici) implementation, we do NOT need to manage
+ * `accept-encoding` here — `got` advertises the encodings it can decode
+ * and decompresses the response body transparently.
+ *
  * @internal
  */
-function getDispatcher(origin: string, http2: boolean): Agent {
-  const key = `${origin}|h2=${http2}`;
-  const cached = dispatcherCache.get(key);
-  if (cached) {
-    // Move to end of Map (most-recently-used)
-    dispatcherCache.delete(key);
-    dispatcherCache.set(key, cached);
-    return cached;
-  }
-
-  // Evict oldest entry if cache is full
-  if (dispatcherCache.size >= MAX_DISPATCHERS) {
-    // biome-ignore lint/style/noNonNullAssertion: cache size check guarantees entry exists
-    const oldest = dispatcherCache.keys().next().value!;
-    // biome-ignore lint/style/noNonNullAssertion: oldest key was just retrieved from cache
-    dispatcherCache
-      .get(oldest)!
-      .destroy()
-      .catch(() => {});
-    dispatcherCache.delete(oldest);
-  }
-
-  const agent = new Agent({
-    allowH2: http2,
-  });
-
-  dispatcherCache.set(key, agent);
-  return agent;
-}
-
-/**
- * Merge caller-supplied headers with cookies from the jar.
- * @internal
- */
-function buildHeaders(url: URL, headers: AptosClientRequest["headers"] | undefined, jar: CookieJarLike): Headers {
-  const result = new Headers();
+function buildHeaders(
+  url: URL,
+  headers: AptosClientRequest["headers"] | undefined,
+  body: unknown,
+  jar: CookieJarLike,
+): Record<string, string> {
+  const result: Record<string, string> = {};
 
   for (const [key, value] of Object.entries(headers ?? {})) {
     if (value !== undefined) {
-      result.set(key, String(value));
+      result[key.toLowerCase()] = String(value);
     }
   }
 
-  applyCookiesToHeaders(result, url, jar);
+  if (body != null && !(body instanceof Uint8Array) && !("content-type" in result)) {
+    result["content-type"] = "application/json";
+  }
 
+  applyJarCookies(result, url, jar);
+
+  return result;
+}
+
+/**
+ * Merge jar cookies into the outgoing `cookie` header.
+ * @internal
+ */
+function applyJarCookies(headers: Record<string, string>, url: URL, jar: CookieJarLike): void {
+  const cookies = jar.getCookies(url);
+  if (cookies.length === 0) return;
+  const jarCookies = cookies.map((c) => `${c.name}=${c.value}`).join("; ");
+  const existing = headers.cookie;
+  headers.cookie = existing ? `${existing}; ${jarCookies}` : jarCookies;
+}
+
+/**
+ * Extract `set-cookie` headers from the response and store them in the jar.
+ *
+ * `got` returns `set-cookie` as `string[]` (one entry per cookie) on
+ * `response.headers["set-cookie"]`. Other headers are plain strings.
+ *
+ * @internal
+ */
+function storeResponseCookies(
+  url: URL,
+  headers: Record<string, string | string[] | undefined>,
+  jar: CookieJarLike,
+): void {
+  const setCookie = headers["set-cookie"];
+  if (!setCookie) return;
+  const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
+  for (const cookie of cookies) {
+    jar.setCookie(url, cookie);
+  }
+}
+
+/**
+ * Normalize got's header record to the v2-compatible response-headers shape.
+ *
+ * got already gives us lowercased plain-object headers; we strip undefined
+ * entries so downstream callers see only present headers.
+ *
+ * @internal
+ */
+function normalizeHeaders(headers: Record<string, string | string[] | undefined>): Record<string, string | string[]> {
+  const result: Record<string, string | string[]> = {};
+  for (const [key, value] of Object.entries(headers)) {
+    if (value !== undefined) {
+      result[key] = value;
+    }
+  }
   return result;
 }
