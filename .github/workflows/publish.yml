@@ -65,4 +65,4 @@ jobs:
           tar xzf /tmp/npm-latest.tgz --strip-components=1 -C "$npm_dir"
           npm --version
 
-      - run: npm publish --provenance --access public
+      - run: npm stage publish --provenance --access public
