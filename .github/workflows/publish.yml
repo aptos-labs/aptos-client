@@ -31,7 +31,9 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          PKG_VERSION="v$(node -p 'require("./package.json").version')"
+          # Read package.json via ESM so the file works under strict workflow
+          # validators that disallow CJS imports inside inline `node -e` scripts.
+          PKG_VERSION="v$(node --input-type=module -e "import { readFile } from 'node:fs/promises'; const p = JSON.parse(await readFile('./package.json', 'utf8')); process.stdout.write(p.version)")"
           if [ "$PKG_VERSION" != "$TAG" ]; then
             echo "::error::package.json version ($PKG_VERSION) does not match release tag ($TAG)"
             exit 1
@@ -55,4 +57,27 @@ jobs:
 
       - run: pnpm test
 
-      - run: npm stage publish --provenance --access public
+      # Derive the npm dist-tag from the release tag.
+      #
+      #   v4.1.0        → "latest"   (stable release, becomes the default install target)
+      #   v4.2.0-beta.1 → "beta"     (prerelease, only installed via @beta or explicit version)
+      #   v5.0.0-rc.2   → "rc"
+      #   v4.1.0-next.3 → "next"
+      #
+      # Publishing prereleases under a non-`latest` dist-tag is what most callers
+      # mean by "staged publish" — the tarball is on the registry and pinnable,
+      # but `npm install <pkg>` (no version) still resolves to the stable release.
+      - name: Determine npm dist-tag
+        id: dist-tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          if echo "$TAG" | grep -qE '-'; then
+            DIST_TAG=$(echo "$TAG" | sed -E 's/^v[0-9]+\.[0-9]+\.[0-9]+-([a-zA-Z]+).*/\1/')
+          else
+            DIST_TAG=latest
+          fi
+          echo "Publishing $TAG under npm dist-tag '$DIST_TAG'"
+          echo "tag=$DIST_TAG" >> "$GITHUB_OUTPUT"
+
+      - run: npm publish --provenance --access public --tag '${{ steps.dist-tag.outputs.tag }}'
