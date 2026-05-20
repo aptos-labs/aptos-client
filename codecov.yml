@@ -1,0 +1,31 @@
+# Codecov configuration — https://docs.codecov.com/docs/codecov-yaml
+#
+# Coverage goals:
+#  - Project (overall): >= 80% line coverage with a 2% drop tolerance.
+#  - Patch (changed lines in a PR): >= 80% of new/changed lines covered.
+#
+# These thresholds match the bar set when reverting the Node entry to `got`
+# in 4.1.0 (see CHANGELOG); the suite ships at ~99% line / ~94% branch and
+# we want regressions caught before they merge.
+
+coverage:
+  status:
+    project:
+      default:
+        target: 80%
+        threshold: 2%
+        if_ci_failed: error
+    patch:
+      default:
+        target: 80%
+        if_ci_failed: error
+
+# Only report on source — tests and build artifacts shouldn't count.
+ignore:
+  - "test/**"
+  - "dist/**"
+  - "**/*.d.ts"
+
+# Disable the per-PR comment to keep noise low — the status check above
+# enforces the gates, and the dashboard always has the full report.
+comment: false

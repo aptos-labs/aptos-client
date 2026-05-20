@@ -32,7 +32,15 @@ jobs:
           test -f dist/index.node.d.ts   || { echo "Missing dist/index.node.d.ts"; exit 1; }
           test -f dist/index.browser.d.ts || { echo "Missing dist/index.browser.d.ts"; exit 1; }
 
-      - run: pnpm test
+      - name: Run tests with coverage
+        run: pnpm coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@aa56896cf108bd10b5eb883cd1d24196da57f695 # v5.5.4
+        with:
+          files: ./coverage/lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
 
       - run: pnpm test:build
 

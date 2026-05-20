@@ -53,6 +53,7 @@
     "build:clean": "rm -rf dist",
     "build": "pnpm build:clean && tsc --project tsconfig.build.json",
     "test": "tsx --test --test-force-exit test/node.test.ts test/fetch.test.ts test/browser.test.ts test/cookieJar.test.ts",
+    "coverage": "rm -rf coverage && mkdir -p coverage && tsx --test --experimental-test-coverage --test-coverage-include='src/**/*.ts' --test-coverage-exclude='test/**' --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage/lcov.info --test-force-exit test/node.test.ts test/fetch.test.ts test/browser.test.ts test/cookieJar.test.ts",
     "test:node": "tsx --test --test-force-exit test/node.test.ts",
     "test:fetch": "tsx --test --test-force-exit test/fetch.test.ts",
     "test:browser": "tsx --test --test-force-exit test/browser.test.ts",

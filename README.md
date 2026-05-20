@@ -3,6 +3,7 @@
 ![Node Version](https://img.shields.io/node/v/%40aptos-labs%2Faptos-client)
 ![NPM bundle size](https://img.shields.io/bundlephobia/min/%40aptos-labs/aptos-client)
 [![NPM Package Downloads][npm-image-downloads]][npm-url]
+[![codecov](https://codecov.io/gh/aptos-labs/aptos-client/branch/main/graph/badge.svg)](https://codecov.io/gh/aptos-labs/aptos-client)
 
 # @aptos-labs/aptos-client
 
