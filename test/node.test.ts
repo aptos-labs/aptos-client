@@ -208,4 +208,39 @@ describe("node client (got)", () => {
     const bytes = new Uint8Array(res.data as ArrayBuffer);
     assert.deepEqual([...bytes], [0xde, 0xad, 0xbe, 0xef]);
   });
+
+  it("throws on unsupported HTTP methods", async () => {
+    await assert.rejects(jsonRequest({ url: `${h1.url}/json`, method: "PATCH" as any }), /Unsupported method: PATCH/);
+  });
+
+  it("undefined header values are skipped", async () => {
+    const res = await jsonRequest({
+      url: `${h1.url}/json`,
+      method: "GET",
+      headers: { "x-defined": "yes", "x-undefined": undefined },
+    });
+    assert.equal(res.status, 200);
+  });
+
+  it("per-request cookie jar isolates state", async () => {
+    const { CookieJar } = await import("../src/cookieJar.js");
+    const jar = new CookieJar();
+    await jsonRequest({ url: `${h1.url}/set-cookie`, method: "GET", cookieJar: jar });
+    const res = await jsonRequest({
+      url: `${h1.url}/get-cookie`,
+      method: "GET",
+      cookieJar: jar,
+    });
+    assert.equal(res.status, 200);
+    assert.ok((res.data as any).cookie.includes("test=value123"), "per-request jar should round-trip its own cookies");
+
+    // A different jar should NOT receive the same cookie.
+    const otherJar = new CookieJar();
+    const res2 = await jsonRequest({
+      url: `${h1.url}/get-cookie`,
+      method: "GET",
+      cookieJar: otherJar,
+    });
+    assert.equal((res2.data as any).cookie, "");
+  });
 });

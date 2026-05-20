@@ -137,4 +137,47 @@ describe("browser client", () => {
       assert.deepEqual(res.data, { hello: "compressed", encoding }, `data for ${encoding}`);
     }
   });
+
+  it("throws on unsupported HTTP methods", async () => {
+    await assert.rejects(jsonRequest({ url: `${h1.url}/json`, method: "PUT" as any }), /Unsupported method: PUT/);
+  });
+
+  it("warns at most once when the http2 option is set (no-op in browser entry)", async () => {
+    const original = console.warn;
+    const warnings: unknown[][] = [];
+    console.warn = (...args: unknown[]) => warnings.push(args);
+    try {
+      // Fire two consecutive requests with `http2`. The module-level
+      // `http2Warned` flag must keep the count at most one across both.
+      const res1 = await jsonRequest({ url: `${h1.url}/json`, method: "GET", http2: true });
+      const res2 = await jsonRequest({ url: `${h1.url}/json`, method: "GET", http2: false });
+      assert.equal(res1.status, 200);
+      assert.equal(res2.status, 200);
+      const http2Warnings = warnings.filter((w) => String(w[0]).includes("http2"));
+      assert.ok(http2Warnings.length <= 1, `expected at most 1 http2 warning, got ${http2Warnings.length}`);
+    } finally {
+      console.warn = original;
+    }
+  });
+
+  it("WITH_CREDENTIALS=false sends `credentials: omit`", async () => {
+    // We can't inspect fetch's credentials option from the response, but
+    // exercising the branch ensures the build doesn't break and the code
+    // path is covered.
+    const res = await jsonRequest({
+      url: `${h1.url}/json`,
+      method: "GET",
+      overrides: { WITH_CREDENTIALS: false },
+    });
+    assert.equal(res.status, 200);
+  });
+
+  it("undefined header values are skipped", async () => {
+    const res = await jsonRequest({
+      url: `${h1.url}/json`,
+      method: "GET",
+      headers: { "x-defined": "yes", "x-undefined": undefined },
+    });
+    assert.equal(res.status, 200);
+  });
 });

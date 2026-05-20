@@ -163,7 +163,16 @@ Deno.test({
 Deno.test({
   name: "deno integration — teardown servers",
   fn: () => {
-    stopServers();
+    // No-throw assertion: stopServers swallows already-exited errors, so we
+    // verify the call returns cleanly. The presence of the test in the suite
+    // guarantees cleanup runs even when earlier tests fail.
+    let threw = false;
+    try {
+      stopServers();
+    } catch {
+      threw = true;
+    }
+    assert(!threw, "stopServers should not throw");
   },
   sanitizeOps: false,
   sanitizeResources: false,

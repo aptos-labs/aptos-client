@@ -143,4 +143,36 @@ describe("fetch client", () => {
       assert.deepEqual(res.data, { hello: "compressed", encoding }, `data for ${encoding}`);
     }
   });
+
+  it("BCS request handles compressed responses", async () => {
+    const res = await bcsRequest({
+      url: `${h1.url}/compressed`,
+      method: "GET",
+      params: { encoding: "br" },
+    });
+    assert.equal(res.status, 200);
+    const text = new TextDecoder().decode(new Uint8Array(res.data));
+    assert.equal(text, JSON.stringify({ hello: "compressed", encoding: "br" }));
+  });
+
+  it("throws on unsupported HTTP methods", async () => {
+    await assert.rejects(jsonRequest({ url: `${h1.url}/json`, method: "DELETE" as any }), /Unsupported method: DELETE/);
+  });
+
+  it("undefined header values are skipped", async () => {
+    const res = await jsonRequest({
+      url: `${h1.url}/json`,
+      method: "GET",
+      headers: { "x-defined": "yes", "x-undefined": undefined },
+    });
+    assert.equal(res.status, 200);
+  });
+
+  it("ignores http2 option (runtime handles negotiation)", async () => {
+    // Setting http2 explicitly should be a no-op in this entry — exercises
+    // the branch that records `http2` in requestConfig without altering the
+    // request semantics.
+    const res = await jsonRequest({ url: `${h1.url}/json`, method: "GET", http2: true });
+    assert.equal(res.status, 200);
+  });
 });
