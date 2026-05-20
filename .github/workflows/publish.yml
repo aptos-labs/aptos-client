@@ -80,4 +80,11 @@ jobs:
           echo "Publishing $TAG under npm dist-tag '$DIST_TAG'"
           echo "tag=$DIST_TAG" >> "$GITHUB_OUTPUT"
 
+      # Publish via npm OIDC trusted publishing. The composite setup-node-pnpm
+      # action writes an .npmrc referencing ${NODE_AUTH_TOKEN}; clearing it here
+      # forces npm to use the OIDC token minted by `id-token: write` instead of
+      # any inherited classic token, which is what the package's trusted-publisher
+      # config on npmjs.com expects.
       - run: npm publish --provenance --access public --tag '${{ steps.dist-tag.outputs.tag }}'
+        env:
+          NODE_AUTH_TOKEN: ""
