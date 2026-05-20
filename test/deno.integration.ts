@@ -133,9 +133,46 @@ Deno.test({
 });
 
 Deno.test({
+  name: "deno — HTTP/1.1 against h1-only origin",
+  fn: async () => {
+    const res = await jsonRequest({ url: `${h1Url}/json`, method: "GET" });
+    assertEquals(res.status, 200);
+    assertEquals(res.headers?.["x-http-version"], "1.1");
+  },
+  sanitizeOps: false,
+  sanitizeResources: false,
+});
+
+Deno.test({
+  name: "deno — decompresses brotli/gzip/deflate transparently",
+  fn: async () => {
+    for (const encoding of ["br", "gzip", "deflate"] as const) {
+      const res = await jsonRequest({
+        url: `${h1Url}/compressed`,
+        method: "GET",
+        params: { encoding },
+      });
+      assertEquals(res.status, 200);
+      assertEquals(res.data, { hello: "compressed", encoding });
+    }
+  },
+  sanitizeOps: false,
+  sanitizeResources: false,
+});
+
+Deno.test({
   name: "deno integration — teardown servers",
   fn: () => {
-    stopServers();
+    // No-throw assertion: stopServers swallows already-exited errors, so we
+    // verify the call returns cleanly. The presence of the test in the suite
+    // guarantees cleanup runs even when earlier tests fail.
+    let threw = false;
+    try {
+      stopServers();
+    } catch {
+      threw = true;
+    }
+    assert(!threw, "stopServers should not throw");
   },
   sanitizeOps: false,
   sanitizeResources: false,

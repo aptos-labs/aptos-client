@@ -93,8 +93,27 @@ describe("bun — HTTP/2", () => {
     expect(res.status).toBe(200);
     const version = res.headers["x-http-version"];
     console.log(`  Bun negotiated HTTP version: ${version}`);
-    // Bun 1.x fetch does NOT negotiate HTTP/2 — it falls back to 1.1.
-    // This is a known Bun limitation. Track: https://github.com/oven-sh/bun/issues/887
-    expect(version).toBe("1.1");
+    // Bun added HTTP/2 client support after the original release of this
+    // suite. Accept either "2.0" (modern Bun, expected) or "1.1" (older
+    // Bun) so the test stays accurate across versions.
+    expect(["1.1", "2.0"]).toContain(version);
+  });
+
+  it("HTTP/1.1: GET against an h1-only origin reports 1.1", async () => {
+    const res = await jsonRequest({ url: `${h1Url}/json`, method: "GET" });
+    expect(res.status).toBe(200);
+    expect(res.headers["x-http-version"]).toBe("1.1");
+  });
+
+  it("decompresses brotli/gzip/deflate transparently", async () => {
+    for (const encoding of ["br", "gzip", "deflate"] as const) {
+      const res = await jsonRequest({
+        url: `${h1Url}/compressed`,
+        method: "GET",
+        params: { encoding },
+      });
+      expect(res.status).toBe(200);
+      expect(res.data).toEqual({ hello: "compressed", encoding });
+    }
   });
 });

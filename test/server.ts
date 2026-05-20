@@ -6,6 +6,7 @@
 import { Buffer } from "node:buffer";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { createSecureServer, type Http2ServerRequest, type Http2ServerResponse } from "node:http2";
+import { brotliCompressSync, deflateSync, gzipSync } from "node:zlib";
 
 // Pre-generated self-signed cert for localhost (valid 10 years, test-only).
 // This is NOT a production credential — it covers only 127.0.0.1/localhost
@@ -104,6 +105,47 @@ function handler(req: Req, res: Res) {
         res.end(JSON.stringify({ echoed: parsed }));
         return;
       }
+    }
+
+    if (parsedUrl.pathname === "/compressed") {
+      // Honor the client's accept-encoding: only compress when the requested
+      // encoding is allowed. This matches what a real fullnode does and lets
+      // tests verify that the client opted out of compression.
+      const requested = parsedUrl.searchParams.get("encoding") ?? "br";
+      const accept = String(req.headers["accept-encoding"] ?? "").toLowerCase();
+      const acceptsRequested = accept === "" || accept.split(",").some((t) => t.trim().split(";")[0] === requested);
+      const payload = Buffer.from(JSON.stringify({ hello: "compressed", encoding: requested }));
+      res.setHeader("content-type", "application/json");
+      res.setHeader("x-accept-encoding-seen", accept || "(unset)");
+      if (!acceptsRequested) {
+        res.writeHead(200);
+        res.end(payload);
+        return;
+      }
+      // Only set `content-encoding` when we actually compress the body —
+      // this mirrors real server behavior and avoids the misleading-header
+      // footgun where the header would claim an encoding the body doesn't
+      // use (e.g. when a future test passes an unknown encoding value).
+      let encoded: Buffer;
+      switch (requested) {
+        case "br":
+          encoded = brotliCompressSync(payload);
+          res.setHeader("content-encoding", "br");
+          break;
+        case "gzip":
+          encoded = gzipSync(payload);
+          res.setHeader("content-encoding", "gzip");
+          break;
+        case "deflate":
+          encoded = deflateSync(payload);
+          res.setHeader("content-encoding", "deflate");
+          break;
+        default:
+          encoded = payload;
+      }
+      res.writeHead(200);
+      res.end(encoded);
+      return;
     }
 
     if (parsedUrl.pathname === "/bcs") {

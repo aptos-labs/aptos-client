@@ -48,7 +48,7 @@ export function serializeBody(body: unknown): BodyInit | undefined {
 
 /**
  * Set the `content-type` header to `application/json` when the body is
- * a non-binary, non-null value and no content-type has been set already.
+ * a non-binary, non-null value and no content-type has been set.
  * @internal
  */
 export function applyJsonContentType(body: unknown, headers: Headers): void {
@@ -62,7 +62,7 @@ export function applyJsonContentType(body: unknown, headers: Headers): void {
  *
  * Returning raw text (instead of throwing) preserves backward compatibility
  * with v2, where `got` returned error responses as normal `AptosClientResponse`
- * objects. This lets the caller (e.g. the TS SDK) inspect the status code and
+ * objects. This lets the caller (e.g., the TS SDK) inspect the status code and
  * handle the error however it chooses.
  *
  * @internal
@@ -115,7 +115,7 @@ export function storeResponseCookies(url: URL, headers: Headers, jar: CookieJarL
  *
  * This preserves backward compatibility with aptos-client v2, which
  * returned Node's `IncomingHttpHeaders` (a plain object) from the `got`
- * library. Consumers (e.g. the TS SDK) access headers via bracket
+ * library. Consumers (e.g., the TS SDK) access headers via bracket
  * notation (`response.headers["x-aptos-cursor"]`), which only works on
  * plain objects — not on `Headers` instances.
  *

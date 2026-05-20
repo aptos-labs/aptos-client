@@ -53,6 +53,7 @@
     "build:clean": "rm -rf dist",
     "build": "pnpm build:clean && tsc --project tsconfig.build.json",
     "test": "tsx --test --test-force-exit test/node.test.ts test/fetch.test.ts test/browser.test.ts test/cookieJar.test.ts",
+    "coverage": "rm -rf coverage && mkdir -p coverage && tsx --test --experimental-test-coverage --test-coverage-include='src/**/*.ts' --test-coverage-exclude='test/**' --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage/lcov.info --test-force-exit test/node.test.ts test/fetch.test.ts test/browser.test.ts test/cookieJar.test.ts",
     "test:node": "tsx --test --test-force-exit test/node.test.ts",
     "test:fetch": "tsx --test --test-force-exit test/fetch.test.ts",
     "test:browser": "tsx --test --test-force-exit test/browser.test.ts",
@@ -80,14 +81,14 @@
     "Aptos SDK"
   ],
   "dependencies": {
-    "undici": "^7.25.0"
+    "got": "^15.0.5"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.6",
-    "@types/node": "^22.19.17",
-    "esbuild": "^0.28.0",
-    "tsx": "^4.21.0",
-    "typescript": "^6.0.2"
+    "@biomejs/biome": "2.4.15",
+    "@types/node": "22.19.19",
+    "esbuild": "0.28.0",
+    "tsx": "4.22.2",
+    "typescript": "6.0.3"
   },
-  "version": "4.0.0"
+  "version": "4.1.0"
 }

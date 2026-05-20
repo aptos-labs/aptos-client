@@ -12,7 +12,7 @@ export type AptosClientResponse<Res> = {
   statusText: string;
   /** Parsed response body. */
   data: Res;
-  /** The `RequestInit` (or undici equivalent) that was sent. */
+  /** The request options that were sent (shape varies per entry point). */
   // biome-ignore lint/suspicious/noExplicitAny: cross-platform response type; varies per entry point
   config?: any;
   /** Metadata about the outgoing request (Node entry point only). */
@@ -74,10 +74,11 @@ export type AptosClientRequest = {
    * @defaultValue `true`
    *
    * @remarks
-   * Only effective in the **Node** entry point, where it maps to
-   * undici's `Agent({ allowH2 })`. In the **fetch**, **browser**, and
-   * **React Native** entry points the underlying runtime negotiates
-   * HTTP/2 automatically via ALPN — this option is ignored.
+   * Only effective in the **Node** entry point, where it maps to got's
+   * `http2` option (which uses `http2-wrapper` under the hood to negotiate
+   * H2 via ALPN). In the **fetch**, **browser**, and **React Native** entry
+   * points the underlying runtime negotiates HTTP/2 automatically — this
+   * option is ignored there.
    */
   http2?: boolean;
   /**

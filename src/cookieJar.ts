@@ -81,8 +81,7 @@ export class CookieJar {
     const now = new Date();
     const isSecure = url.protocol === "https:";
     const live = cookies.filter((cookie) => {
-      if (cookie.expires && cookie.expires <= now) return false;
-      return true;
+      return !(cookie.expires && cookie.expires <= now);
     });
 
     // Write back to evict expired cookies from storage

@@ -7,6 +7,28 @@ adheres to the format set out by [Keep a Changelog](https://keepachangelog.com/e
 
 # Released
 
+# 4.1.0
+
+> **Compression + HTTP/2 fix.** Versions `>= 3.0.0 < 4.1.0` are broken on Node when an origin returns a compressed response (`content-encoding: br` / `gzip` / `deflate`) — the body surfaces as a string of raw compressed bytes instead of parsed JSON, and downstream code that reads response fields gets `undefined`. The bug affected every Node caller of the Aptos fullnode (which serves brotli) and any Node caller of the indexer GraphQL endpoint when the response was large enough to trigger gzip. Upgrading to 4.1.0 restores the v2-era behavior where compressed responses are decoded transparently on both HTTP/1.1 and HTTP/2.
+
+### Changed
+
+- **Node entry point: `undici` → `got`** — The `fetch + custom undici dispatcher` shape used in v3 and v4.0 silently dropped response headers (including `set-cookie`) and never decompressed responses on HTTP/2; on HTTP/1.1 the `content-encoding` header was stripped without the bytes being decoded, leaving callers no way to detect or fix it. `got` handles decompression in its own body pipeline independent of the transport, which matches what worked in v2.
+- **`got` is a regular dependency** of `@aptos-labs/aptos-client`. Replaces `undici`. Browser, fetch, Deno, Bun, and React Native entry points are unaffected.
+- **`NODE_TLS_REJECT_UNAUTHORIZED` is now honored on HTTP/2** in the Node entry. got's H2 transport (`http2-wrapper`) does not inherit the env var on its own; we now pass it through to `https.rejectUnauthorized` so the documented Node behavior works as expected.
+
+### Fixed
+
+- **Brotli, gzip, and deflate are decoded on every transport** — both HTTP/1.1 and HTTP/2, both the JSON and BCS response paths.
+- **`set-cookie` reaches the cookie jar again** — the v3+ fetch+dispatcher path silently dropped it.
+- **HTTP/2 negotiation is observable to callers** — server-set headers like `x-aptos-*` are no longer swallowed by the dispatcher wrapper.
+
+### Tests
+
+- Added a `/compressed` test endpoint that honors `accept-encoding` and echoes what it received, plus brotli/gzip/deflate decompression tests for every entry point.
+- Recast cross-runtime `HTTP/2` tests as runtime-capability reports (assert and log what the runtime negotiates) so they remain accurate as Node, Bun, and Deno improve.
+- Confirmed Node 24+ undici-backed fetch now negotiates HTTP/2 via ALPN; recent Bun versions also negotiate H2.
+
 # 4.0.0
 
 ### Breaking Changes
