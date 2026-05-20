@@ -39,9 +39,16 @@ jobs:
             exit 1
           fi
 
+      # No registry-url here: passing it makes actions/setup-node write a
+      # project .npmrc with `_authToken=${NODE_AUTH_TOKEN}` and `always-auth=true`,
+      # which npm then prefers over OIDC trusted publishing — even when the
+      # token expands to empty. Skipping it lets `npm publish` use its default
+      # registry config and authenticate via the OIDC token from `id-token: write`.
+      # Node 24 ships with npm 11.x, which is required for OIDC *publish* auth
+      # (npm 10 can sign provenance but cannot authenticate publishes via OIDC).
       - uses: ./.github/actions/setup-node-pnpm
         with:
-          registry-url: "https://registry.npmjs.org"
+          node-version: "24"
 
       - run: pnpm check
 
@@ -80,11 +87,20 @@ jobs:
           echo "Publishing $TAG under npm dist-tag '$DIST_TAG'"
           echo "tag=$DIST_TAG" >> "$GITHUB_OUTPUT"
 
-      # Publish via npm OIDC trusted publishing. The composite setup-node-pnpm
-      # action writes an .npmrc referencing ${NODE_AUTH_TOKEN}; clearing it here
-      # forces npm to use the OIDC token minted by `id-token: write` instead of
-      # any inherited classic token, which is what the package's trusted-publisher
-      # config on npmjs.com expects.
+      # Diagnostic: capture the npm CLI's effective config + version so future
+      # OIDC publishing failures are debuggable without a workflow re-edit.
+      # `npm config list` redacts secrets, so this is safe to print.
+      - name: Diagnostic — npm version and effective config
+        run: |
+          echo "node: $(node --version)"
+          echo "npm:  $(npm --version)"
+          echo "--- npm config list ---"
+          npm config list || true
+          echo "--- userconfig file (if any) ---"
+          if [ -n "${NPM_CONFIG_USERCONFIG:-}" ] && [ -f "$NPM_CONFIG_USERCONFIG" ]; then
+            cat "$NPM_CONFIG_USERCONFIG"
+          else
+            echo "(no userconfig file in use)"
+          fi
+
       - run: npm publish --provenance --access public --tag '${{ steps.dist-tag.outputs.tag }}'
-        env:
-          NODE_AUTH_TOKEN: ""
