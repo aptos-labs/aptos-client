@@ -122,21 +122,27 @@ function handler(req: Req, res: Res) {
         res.end(payload);
         return;
       }
+      // Only set `content-encoding` when we actually compress the body —
+      // this mirrors real server behavior and avoids the misleading-header
+      // footgun where the header would claim an encoding the body doesn't
+      // use (e.g. when a future test passes an unknown encoding value).
       let encoded: Buffer;
       switch (requested) {
         case "br":
           encoded = brotliCompressSync(payload);
+          res.setHeader("content-encoding", "br");
           break;
         case "gzip":
           encoded = gzipSync(payload);
+          res.setHeader("content-encoding", "gzip");
           break;
         case "deflate":
           encoded = deflateSync(payload);
+          res.setHeader("content-encoding", "deflate");
           break;
         default:
           encoded = payload;
       }
-      res.setHeader("content-encoding", requested);
       res.writeHead(200);
       res.end(encoded);
       return;
